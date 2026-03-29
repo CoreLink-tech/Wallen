@@ -324,6 +324,12 @@ const siteData = {
   ]
 };
 
+const checkoutStorageKey = "morganWallenCheckout";
+const sitewideDiscountRate = 0.1;
+const paymentData = {
+  btcAddress: "bc1paup02nxr2hfplcfyzpcwnulgjh7uz38lsedr9juwln9lh04vlepqc8ujp3"
+};
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -340,6 +346,54 @@ function roundToNearestFive(value) {
   return Math.round(value / 5) * 5;
 }
 
+function applySitewideDiscount(value) {
+  return value * (1 - sitewideDiscountRate);
+}
+
+function formatFixedCurrency(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+function discountPriceText(text) {
+  return text.replace(/\$([0-9]+(?:\.[0-9]{1,2})?)/g, (match, amount) => {
+    const discountedAmount = applySitewideDiscount(Number.parseFloat(amount));
+    return formatFixedCurrency(discountedAmount);
+  });
+}
+
+function applySitewideDiscounts() {
+  if (siteData.discountApplied) {
+    return;
+  }
+
+  siteData.events = siteData.events.map((event) => ({
+    ...event,
+    priceFrom: Math.round(applySitewideDiscount(event.priceFrom)),
+    averagePrice: Math.round(applySitewideDiscount(event.averagePrice))
+  }));
+
+  siteData.music = siteData.music.map((item) => ({
+    ...item,
+    kicker: discountPriceText(item.kicker),
+    meta: discountPriceText(item.meta)
+  }));
+
+  siteData.merch = siteData.merch.map((item) => ({
+    ...item,
+    kicker: discountPriceText(item.kicker),
+    meta: discountPriceText(item.meta)
+  }));
+
+  siteData.discountApplied = true;
+}
+
+applySitewideDiscounts();
+
 function buildTicketUrl(eventId) {
   return `tickets.html?event=${encodeURIComponent(eventId)}`;
 }
@@ -348,12 +402,78 @@ function buildCheckoutUrl(eventId, listingId, quantity) {
   return `checkout.html?event=${encodeURIComponent(eventId)}&listing=${encodeURIComponent(listingId)}&qty=${encodeURIComponent(quantity)}`;
 }
 
+function buildPaymentUrl(eventId, listingId, quantity, method = "") {
+  const params = new URLSearchParams({
+    event: eventId,
+    listing: listingId,
+    qty: String(quantity)
+  });
+
+  if (method) {
+    params.set("method", method);
+  }
+
+  return `payment.html?${params.toString()}`;
+}
+
 function getEventById(eventId) {
   return siteData.events.find((event) => event.id === eventId) || siteData.events[0];
 }
 
 function getCheapestEvent() {
   return [...siteData.events].sort((left, right) => left.priceFrom - right.priceFrom)[0];
+}
+
+function getOrderContext(params) {
+  const currentEvent = getEventById(params.get("event"));
+  const listings = buildListings(currentEvent);
+  const listing = listings.find((item) => item.id === params.get("listing")) || listings[0];
+  const requestedQuantity = Number.parseInt(params.get("qty"), 10) || 2;
+  const quantity = listing.quantities.includes(requestedQuantity) ? requestedQuantity : listing.quantities[0];
+  const subtotal = listing.price * quantity;
+  const fees = listing.fees * quantity;
+  const total = subtotal + fees;
+
+  return {
+    currentEvent,
+    listing,
+    quantity,
+    subtotal,
+    fees,
+    total
+  };
+}
+
+function saveCheckoutProfile(profile) {
+  try {
+    window.sessionStorage.setItem(checkoutStorageKey, JSON.stringify(profile));
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function loadCheckoutProfile() {
+  try {
+    const savedProfile = window.sessionStorage.getItem(checkoutStorageKey);
+    return savedProfile ? JSON.parse(savedProfile) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function getCheckoutProfileForOrder(orderContext) {
+  const savedProfile = loadCheckoutProfile();
+  if (!savedProfile) {
+    return null;
+  }
+
+  const isSameOrder =
+    savedProfile.eventId === orderContext.currentEvent.id &&
+    savedProfile.listingId === orderContext.listing.id &&
+    savedProfile.quantity === orderContext.quantity;
+
+  return isSameOrder ? savedProfile : null;
 }
 
 function buildZones(event) {
@@ -932,14 +1052,8 @@ function renderCheckoutPage() {
   }
 
   const params = new URLSearchParams(window.location.search);
-  const currentEvent = getEventById(params.get("event"));
-  const listings = buildListings(currentEvent);
-  const listing = listings.find((item) => item.id === params.get("listing")) || listings[0];
-  const requestedQuantity = Number.parseInt(params.get("qty"), 10) || 2;
-  const quantity = listing.quantities.includes(requestedQuantity) ? requestedQuantity : listing.quantities[0];
-  const subtotal = listing.price * quantity;
-  const fees = listing.fees * quantity;
-  const total = subtotal + fees;
+  const orderContext = getOrderContext(params);
+  const { currentEvent, listing, quantity, subtotal, fees, total } = orderContext;
 
   document.title = `${currentEvent.city} Checkout | Morgan Wallen`;
 
@@ -951,7 +1065,6 @@ function renderCheckoutPage() {
   const checkoutDeliveryValue = document.getElementById("checkoutDeliveryValue");
   const checkoutTotal = document.getElementById("checkoutTotal");
   const checkoutForm = document.getElementById("checkoutForm");
-  const checkoutMessage = document.getElementById("checkoutMessage");
 
   checkoutBackLink.href = buildTicketUrl(currentEvent.id);
   checkoutEventTitle.textContent = `${currentEvent.city} | ${currentEvent.dateLabel}`;
@@ -967,6 +1080,16 @@ function renderCheckoutPage() {
   checkoutDeliveryValue.textContent = listing.delivery;
   checkoutTotal.textContent = formatCurrency(total);
 
+  const savedProfile = getCheckoutProfileForOrder(orderContext);
+  if (savedProfile) {
+    checkoutForm.elements.firstName.value = savedProfile.firstName || "";
+    checkoutForm.elements.lastName.value = savedProfile.lastName || "";
+    checkoutForm.elements.email.value = savedProfile.email || "";
+    checkoutForm.elements.phone.value = savedProfile.phone || "";
+    checkoutForm.elements.note.value = savedProfile.note || "";
+    checkoutForm.elements.terms.checked = true;
+  }
+
   checkoutForm.addEventListener("submit", (event) => {
     event.preventDefault();
     if (!checkoutForm.reportValidity()) {
@@ -974,10 +1097,162 @@ function renderCheckoutPage() {
     }
 
     const formData = new FormData(checkoutForm);
-    checkoutMessage.textContent = `Order request saved for ${formData.get("firstName")} ${formData.get("lastName")} at ${formData.get("email")} for ${currentEvent.city}. Total preview: ${formatCurrency(total)}.`;
-    checkoutMessage.classList.add("is-success");
-    checkoutForm.reset();
+    saveCheckoutProfile({
+      eventId: currentEvent.id,
+      listingId: listing.id,
+      quantity,
+      firstName: String(formData.get("firstName") || "").trim(),
+      lastName: String(formData.get("lastName") || "").trim(),
+      email: String(formData.get("email") || "").trim(),
+      phone: String(formData.get("phone") || "").trim(),
+      note: String(formData.get("note") || "").trim()
+    });
+    window.location.href = buildPaymentUrl(currentEvent.id, listing.id, quantity);
   });
+}
+
+function renderPaymentPage() {
+  const paymentEventTitle = document.getElementById("paymentEventTitle");
+  if (!paymentEventTitle) {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const orderContext = getOrderContext(params);
+  const { currentEvent, listing, quantity, subtotal, fees, total } = orderContext;
+  const buyerProfile = getCheckoutProfileForOrder(orderContext);
+
+  document.title = `${currentEvent.city} Payment | Morgan Wallen`;
+
+  const paymentBackLink = document.getElementById("paymentBackLink");
+  const paymentEventMeta = document.getElementById("paymentEventMeta");
+  const paymentTicketCard = document.getElementById("paymentTicketCard");
+  const paymentBuyerName = document.getElementById("paymentBuyerName");
+  const paymentBuyerEmail = document.getElementById("paymentBuyerEmail");
+  const paymentDeliveryValue = document.getElementById("paymentDeliveryValue");
+  const paymentSubtotal = document.getElementById("paymentSubtotal");
+  const paymentFees = document.getElementById("paymentFees");
+  const paymentTotal = document.getElementById("paymentTotal");
+  const paymentMethodGrid = document.getElementById("paymentMethodGrid");
+  const paymentMethodButtons = Array.from(paymentMethodGrid.querySelectorAll("[data-method]"));
+  const paymentDetailCard = document.getElementById("paymentDetailCard");
+  const copyPaymentAddress = document.getElementById("copyPaymentAddress");
+  const paymentSentButton = document.getElementById("paymentSentButton");
+  const paymentMessage = document.getElementById("paymentMessage");
+
+  const paymentMethods = {
+    btc: {
+      label: "BTC",
+      badge: "BTC",
+      title: "Bitcoin wallet transfer",
+      description: "Use any BTC wallet to send the crypto equivalent of your order total to the wallet address below.",
+      addressLabel: "BTC wallet address",
+      address: paymentData.btcAddress,
+      copyLabel: "BTC wallet address",
+      instructions: [
+        `Order total to cover: ${formatCurrency(total)}.`,
+        "Check the live BTC equivalent in your wallet right before sending.",
+        "Review the destination address carefully before you confirm the transfer."
+      ]
+    }
+  };
+
+  let selectedMethod = paymentMethods[params.get("method")] ? params.get("method") : "";
+
+  paymentBackLink.href = buildCheckoutUrl(currentEvent.id, listing.id, quantity);
+  paymentEventTitle.textContent = `${currentEvent.city} | ${currentEvent.dateLabel}`;
+  paymentEventMeta.textContent = `${currentEvent.venue} | ${currentEvent.support.join(", ")} | Market snapshot ${siteData.snapshotDate}`;
+  paymentTicketCard.innerHTML = `
+    <span class="summary-kicker">${listing.flag}</span>
+    <h3>${listing.section} | Row ${listing.row}</h3>
+    <p class="order-note">${listing.zone} | ${listing.delivery}</p>
+    <p class="order-note">${quantity} ticket${quantity === 1 ? "" : "s"} selected | ${formatCurrency(listing.price)} each</p>
+  `;
+  paymentBuyerName.textContent = buyerProfile ? `${buyerProfile.firstName} ${buyerProfile.lastName}`.trim() || "Buyer details saved" : "Buyer details not loaded";
+  paymentBuyerEmail.textContent = buyerProfile ? buyerProfile.email || buyerProfile.phone || "Contact not provided" : "Return to checkout to save buyer details";
+  paymentDeliveryValue.textContent = listing.delivery;
+  paymentSubtotal.textContent = formatCurrency(subtotal);
+  paymentFees.textContent = formatCurrency(fees);
+  paymentTotal.textContent = formatCurrency(total);
+
+  function setPaymentMessage(message, isSuccess) {
+    paymentMessage.textContent = message;
+    paymentMessage.classList.toggle("is-success", isSuccess);
+  }
+
+  function syncPaymentUrl() {
+    const nextUrl = buildPaymentUrl(currentEvent.id, listing.id, quantity, selectedMethod);
+    window.history.replaceState({}, "", nextUrl);
+  }
+
+  function renderSelectedMethod() {
+    paymentMethodButtons.forEach((button) => {
+      const isSelected = button.getAttribute("data-method") === selectedMethod;
+      button.classList.toggle("is-selected", isSelected);
+      button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    });
+
+    if (!selectedMethod) {
+      paymentDetailCard.innerHTML = `<p class="order-note">Choose BTC to reveal the payment instructions and wallet address. Cash App is currently unavailable.</p>`;
+      copyPaymentAddress.hidden = true;
+      paymentSentButton.hidden = true;
+      return;
+    }
+
+    const method = paymentMethods[selectedMethod];
+    paymentDetailCard.innerHTML = `
+      <span class="summary-kicker">${method.badge}</span>
+      <h3>${method.title}</h3>
+      <p class="order-note">${method.description}</p>
+      <ul class="payment-instruction-list">
+        ${method.instructions.map((instruction) => `<li>${instruction}</li>`).join("")}
+      </ul>
+      <div class="payment-address-block">
+        <span class="payment-address-label">${method.addressLabel}</span>
+        <strong class="payment-address-value">${method.address}</strong>
+      </div>
+    `;
+    copyPaymentAddress.hidden = false;
+    paymentSentButton.hidden = false;
+    copyPaymentAddress.textContent = `Copy ${method.copyLabel}`;
+  }
+
+  paymentMethodButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      selectedMethod = button.getAttribute("data-method") || "";
+      syncPaymentUrl();
+      renderSelectedMethod();
+      setPaymentMessage(`${paymentMethods[selectedMethod].label} instructions are now on screen.`, true);
+    });
+  });
+
+  copyPaymentAddress.addEventListener("click", async () => {
+    if (!selectedMethod) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(paymentMethods[selectedMethod].address);
+      setPaymentMessage(`${paymentMethods[selectedMethod].copyLabel} copied to the clipboard.`, true);
+    } catch (error) {
+      setPaymentMessage("Copy failed in this browser. Use the wallet address shown on screen.", false);
+    }
+  });
+
+  paymentSentButton.addEventListener("click", () => {
+    if (!selectedMethod) {
+      return;
+    }
+
+    const buyerName = buyerProfile ? `${buyerProfile.firstName} ${buyerProfile.lastName}`.trim() || "the buyer" : "the buyer";
+    setPaymentMessage(
+      `Payment marked as sent for ${buyerName} via ${paymentMethods[selectedMethod].label}. Keep the wallet reference ready for the ${currentEvent.city} order.`,
+      true
+    );
+  });
+
+  syncPaymentUrl();
+  renderSelectedMethod();
 }
 
 function init() {
@@ -990,6 +1265,9 @@ function init() {
   }
   if (page === "checkout") {
     renderCheckoutPage();
+  }
+  if (page === "payment") {
+    renderPaymentPage();
   }
 }
 

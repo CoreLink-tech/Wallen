@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morgan Wallen Tickets | Payment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="specialized.css" />
+  <script src="site.js" defer></script>
+</head>
+<body data-page="payment">
+  <div class="site-shell">
+    <header class="topbar">
+      <a class="brand" href="index.html#home" aria-label="Morgan Wallen home">
+        <span>Morgan</span>
+        <span>Wallen</span>
+      </a>
+
+      <nav aria-label="Primary">
+        <ul class="nav-links">
+          <li><a href="index.html#tour">Tour</a></li>
+          <li><a href="tickets.html">Tickets</a></li>
+          <li><a href="index.html#music">Music</a></li>
+          <li><a href="index.html#store">Store</a></li>
+          <li><a href="index.html#signup">Sign Up</a></li>
+        </ul>
+      </nav>
+
+      <div class="socials" aria-label="Quick links">
+        <a class="social-link" href="tickets.html" aria-label="Ticket hub">hub</a>
+        <a class="social-link" href="checkout.html" aria-label="Checkout">cart</a>
+        <a class="social-link" href="https://morganwallen.com/" target="_blank" rel="noreferrer" aria-label="Official site">web</a>
+      </div>
+    </header>
+
+    <main class="checkout-page">
+      <noscript class="no-script">Enable JavaScript to load your order, choose a payment method, and reveal the wallet details.</noscript>
+
+      <section class="checkout-hero">
+        <a class="back-link" id="paymentBackLink" href="checkout.html">Back to checkout</a>
+        <p class="eyebrow">Payment</p>
+        <h1>Choose the payment method and reveal the transfer details.</h1>
+        <p>
+          Select BTC to display the account info for this order. Cash App is currently unavailable, and the ticket summary and total stay synced to the listing selected in the ticket hub.
+        </p>
+      </section>
+
+      <section class="checkout-layout">
+        <article class="checkout-panel">
+          <p class="eyebrow">Order Summary</p>
+          <h2 id="paymentEventTitle">Loading event...</h2>
+          <p class="checkout-meta" id="paymentEventMeta"></p>
+
+          <div class="checkout-ticket-card" id="paymentTicketCard"></div>
+
+          <div class="checkout-line">
+            <span>Buyer</span>
+            <strong id="paymentBuyerName">Waiting for checkout details</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Contact</span>
+            <strong id="paymentBuyerEmail">Return to checkout to save details</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Delivery</span>
+            <strong id="paymentDeliveryValue">Mobile transfer</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Ticket subtotal</span>
+            <strong id="paymentSubtotal">$0</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Estimated fees</span>
+            <strong id="paymentFees">$0</strong>
+          </div>
+
+          <div class="checkout-total">
+            <span>Total due today</span>
+            <strong id="paymentTotal">$0</strong>
+          </div>
+
+          <p class="field-help">
+            Use the order total shown here when sending the transfer. Delivery notes and buyer info follow the order from the checkout step.
+          </p>
+        </article>
+
+        <article class="checkout-panel">
+          <p class="eyebrow">Choose Method</p>
+          <h2>Payment details</h2>
+          <p class="field-help">BTC is active right now. Cash App is shown below as unavailable.</p>
+
+          <div class="payment-method-grid" id="paymentMethodGrid">
+            <button class="payment-method-button" type="button" data-method="btc" aria-pressed="false">
+              <span class="summary-kicker">BTC</span>
+              <strong>Bitcoin wallet transfer</strong>
+              <small>Send from any BTC wallet directly to the address on this page.</small>
+            </button>
+
+            <button class="payment-method-button is-unavailable" type="button" data-method="cash-app" aria-disabled="true" disabled>
+              <span class="summary-kicker">Cash App</span>
+              <strong>Currently unavailable</strong>
+              <small>BTC is the only active payment option on this page right now.</small>
+            </button>
+          </div>
+
+          <div class="payment-detail-card" id="paymentDetailCard">
+            <p class="order-note">Choose BTC to reveal the payment instructions and wallet address. Cash App is currently unavailable.</p>
+          </div>
+
+          <div class="payment-actions">
+            <button class="button" id="copyPaymentAddress" type="button" hidden>Copy wallet address</button>
+            <button class="button-secondary" id="paymentSentButton" type="button" hidden>I Have Sent Payment</button>
+          </div>
+
+          <p class="form-message" id="paymentMessage" aria-live="polite"></p>
+        </article>
+      </section>
+
+      <section class="help-panel">
+        <p class="eyebrow">After Payment</p>
+        <h2>What this step does</h2>
+
+        <ul class="help-list">
+          <li>The payment view keeps the same event, listing, quantity, and order total from checkout.</li>
+          <li>Cash App stays visible on the page, but it is currently unavailable for this checkout flow.</li>
+          <li>Once payment is sent, keep the transaction reference ready for delivery follow-up.</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Payment details are handled locally in this site and stay connected to the selected ticket listing. Displayed pricing reflects a 10% sitewide discount on the March 29, 2026 marketplace snapshot.
+      </p>
+
+      <div class="footer-links">
+        <a href="tickets.html">Ticket Hub</a>
+        <a href="checkout.html">Checkout</a>
+        <a href="https://morganwallen.com/" target="_blank" rel="noreferrer">Official Site</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
