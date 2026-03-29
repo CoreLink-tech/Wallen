@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morgan Wallen Tickets | Confirmation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="specialized.css" />
+  <script src="site.js" defer></script>
+</head>
+<body data-page="confirmation">
+  <div class="site-shell">
+    <header class="topbar">
+      <a class="brand" href="index.html#home" aria-label="Morgan Wallen home">
+        <span>Morgan</span>
+        <span>Wallen</span>
+      </a>
+
+      <nav aria-label="Primary">
+        <ul class="nav-links">
+          <li><a href="index.html#tour">Tour</a></li>
+          <li><a href="tickets.html">Tickets</a></li>
+          <li><a href="index.html#music">Music</a></li>
+          <li><a href="index.html#store">Store</a></li>
+          <li><a href="index.html#signup">Sign Up</a></li>
+        </ul>
+      </nav>
+
+      <div class="socials" aria-label="Quick links">
+        <a class="social-link" href="tickets.html" aria-label="Event overview">view</a>
+        <a class="social-link" href="payment.html" aria-label="Payment">pay</a>
+        <a class="social-link" href="https://morganwallen.com/" target="_blank" rel="noreferrer" aria-label="Official site">web</a>
+      </div>
+    </header>
+
+    <main class="checkout-page">
+      <noscript class="no-script">Enable JavaScript to load the confirmation details for your selected payment method.</noscript>
+
+      <section class="checkout-hero">
+        <a class="back-link" id="confirmationBackLink" href="payment.html">Back to payment</a>
+        <p class="eyebrow">Confirmation</p>
+        <h1>We&apos;re checking your transaction details.</h1>
+        <p>
+          Payment has been marked as sent for this order. Transaction review can take up to 45 minutes before confirmation is shown, and the order summary stays connected to the selected listing.
+        </p>
+      </section>
+
+      <section class="checkout-layout">
+        <article class="checkout-panel">
+          <p class="eyebrow">Status</p>
+          <h2 id="confirmationEventTitle">Loading event...</h2>
+          <p class="checkout-meta" id="confirmationEventMeta"></p>
+
+          <div class="checkout-ticket-card confirmation-status-card">
+            <span class="summary-kicker" id="confirmationMethodBadge">Pending</span>
+            <h3 id="confirmationStatusTitle">Checking transaction</h3>
+            <p class="order-note" id="confirmationStatusCopy"></p>
+          </div>
+
+          <div class="checkout-line">
+            <span>Current status</span>
+            <strong id="confirmationStatusValue">Checking transaction</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Review window</span>
+            <strong id="confirmationReviewWindow">Up to 45 minutes</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Buyer</span>
+            <strong id="confirmationBuyerName">Buyer details pending</strong>
+          </div>
+
+          <a class="button-secondary" id="confirmationPaymentLink" href="payment.html">Back to Payment Instructions</a>
+        </article>
+
+        <article class="checkout-panel">
+          <p class="eyebrow">Order Summary</p>
+          <h2 id="confirmationSummaryTitle">Loading order...</h2>
+
+          <div class="checkout-ticket-card" id="confirmationTicketCard"></div>
+
+          <div class="checkout-line">
+            <span>Payment method</span>
+            <strong id="confirmationMethodValue">Pending</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Ticket subtotal</span>
+            <strong id="confirmationSubtotal">$0</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Estimated fees</span>
+            <strong id="confirmationFees">$0</strong>
+          </div>
+
+          <div class="checkout-total">
+            <span>Total due today</span>
+            <strong id="confirmationTotal">$0</strong>
+          </div>
+
+          <div class="payment-address-block">
+            <span class="payment-address-label" id="confirmationWalletLabel">Payment address</span>
+            <strong class="payment-address-value" id="confirmationWalletValue">Return to the payment page to choose a method.</strong>
+          </div>
+        </article>
+      </section>
+
+      <section class="help-panel">
+        <p class="eyebrow">Next Steps</p>
+        <h2>What to keep ready</h2>
+
+        <ul class="help-list">
+          <li>Keep the wallet transaction hash or payment reference available for follow-up.</li>
+          <li>Transaction checks can take up to 45 minutes depending on the chain and wallet activity.</li>
+          <li>If you need to review the wallet address or switch methods, return to the payment page.</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Confirmation details are handled locally in this site and stay tied to the selected ticket listing and payment method. Displayed pricing reflects a 10% sitewide discount on the March 29, 2026 marketplace snapshot.
+      </p>
+
+      <div class="footer-links">
+        <a href="payment.html">Payment</a>
+        <a href="checkout.html">Checkout</a>
+        <a href="https://morganwallen.com/" target="_blank" rel="noreferrer">Official Site</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

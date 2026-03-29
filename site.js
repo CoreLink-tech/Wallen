@@ -327,7 +327,9 @@ const siteData = {
 const checkoutStorageKey = "morganWallenCheckout";
 const sitewideDiscountRate = 0.1;
 const paymentData = {
-  btcAddress: "bc1paup02nxr2hfplcfyzpcwnulgjh7uz38lsedr9juwln9lh04vlepqc8ujp3"
+  btcAddress: "bc1paup02nxr2hfplcfyzpcwnulgjh7uz38lsedr9juwln9lh04vlepqc8ujp3",
+  ethAddress: "0x1f1E3dbc1AE4f5DBa2E90afe590355B9E4B9F2Ce",
+  usdtAddress: "0x563bca3e7712E31A17e7Db7F5E4b3762614236e5"
 };
 
 function formatCurrency(value) {
@@ -381,6 +383,40 @@ function buildDiscountPriceMarkup(originalValue, options = {}) {
   `.trim();
 }
 
+function buildHeroChipMarkup(valueMarkup, label) {
+  return `
+    <span class="ticket-chip">
+      <span class="ticket-chip-value">${valueMarkup}</span>
+      <span class="ticket-chip-caption">${label}</span>
+    </span>
+  `.trim();
+}
+
+function buildTourMarketMarkup(event) {
+  return `
+    <span class="tour-market-group">
+      <span class="tour-market-label">From</span>
+      ${buildDiscountPriceMarkup(event.priceFrom)}
+    </span>
+    <span class="tour-market-divider" aria-hidden="true">|</span>
+    <span class="tour-market-group">
+      <span class="tour-market-label">Avg</span>
+      ${buildDiscountPriceMarkup(event.averagePrice)}
+    </span>
+    <span class="tour-market-divider" aria-hidden="true">|</span>
+    <span class="tour-market-volume">${formatNumber(event.availableTickets)} tickets</span>
+  `.trim();
+}
+
+function buildTicketLinkPriceMarkup(price) {
+  return `
+    <span class="ticket-link-price">
+      <span class="ticket-link-price-label">From</span>
+      ${buildDiscountPriceMarkup(price)}
+    </span>
+  `.trim();
+}
+
 function decoratePriceText(text) {
   return text.replace(/\$([0-9][0-9,]*(?:\.[0-9]{1,2})?)/g, (match, amount) => {
     const originalValue = Number.parseFloat(amount.replace(/,/g, ""));
@@ -392,7 +428,7 @@ function buildTicketUrl(eventId) {
   return `tickets.html?event=${encodeURIComponent(eventId)}`;
 }
 
-function buildListingsUrl(eventId, quantity = 2, zone = "", listingId = "") {
+function buildListingsUrl(eventId, quantity = 1, zone = "", listingId = "") {
   const params = new URLSearchParams({
     event: eventId,
     qty: String(quantity)
@@ -427,6 +463,99 @@ function buildPaymentUrl(eventId, listingId, quantity, method = "") {
   return `payment.html?${params.toString()}`;
 }
 
+function buildConfirmationUrl(eventId, listingId, quantity, method = "") {
+  const params = new URLSearchParams({
+    event: eventId,
+    listing: listingId,
+    qty: String(quantity)
+  });
+
+  if (method) {
+    params.set("method", method);
+  }
+
+  return `confirmation.html?${params.toString()}`;
+}
+
+function formatCryptoAmount(value, fractionDigits) {
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits
+  }).format(value);
+}
+
+async function fetchUsdCryptoRates() {
+  const response = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD");
+  if (!response.ok) {
+    throw new Error(`Rate request failed with status ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const rates = payload?.data?.rates;
+  if (!rates) {
+    throw new Error("Rate payload missing");
+  }
+
+  const parsedRates = {
+    btc: Number.parseFloat(rates.BTC),
+    eth: Number.parseFloat(rates.ETH),
+    usdt: Number.parseFloat(rates.USDT)
+  };
+
+  if (!Object.values(parsedRates).every((value) => Number.isFinite(value) && value > 0)) {
+    throw new Error("Required crypto rates missing");
+  }
+
+  return parsedRates;
+}
+
+function getPaymentMethods(totalDue) {
+  return {
+    btc: {
+      label: "BTC",
+      badge: "BTC",
+      title: "Bitcoin wallet transfer",
+      description: "Use any BTC wallet to send the crypto equivalent of your order total to the wallet address below.",
+      addressLabel: "BTC wallet address",
+      address: paymentData.btcAddress,
+      copyLabel: "BTC wallet address",
+      instructions: [
+        `Order total to cover today: ${formatCurrency(totalDue)}.`,
+        "Send the exact BTC amount shown in the converter card below for this order.",
+        "Review the destination address carefully before you confirm the transfer."
+      ]
+    },
+    eth: {
+      label: "ETH",
+      badge: "ETH",
+      title: "Ethereum wallet transfer",
+      description: "Use any ETH wallet to send the crypto equivalent of your order total to the address below.",
+      addressLabel: "ETH wallet address",
+      address: paymentData.ethAddress,
+      copyLabel: "ETH wallet address",
+      instructions: [
+        `Order total to cover today: ${formatCurrency(totalDue)}.`,
+        "Send the exact ETH amount shown in the converter card below for this order.",
+        "Review the destination address carefully before you confirm the transfer."
+      ]
+    },
+    usdt: {
+      label: "USDT",
+      badge: "USDT",
+      title: "USDT wallet transfer",
+      description: "Send the stablecoin amount for this order to the USDT address below.",
+      addressLabel: "USDT wallet address",
+      address: paymentData.usdtAddress,
+      copyLabel: "USDT wallet address",
+      instructions: [
+        `Order total to cover today: ${formatCurrency(totalDue)} in USDT.`,
+        "Send the exact USDT amount shown in the converter card below for this order.",
+        "Review the destination address carefully before you confirm the transfer."
+      ]
+    }
+  };
+}
+
 function getEventById(eventId) {
   return siteData.events.find((event) => event.id === eventId) || siteData.events[0];
 }
@@ -439,7 +568,7 @@ function getOrderContext(params) {
   const currentEvent = getEventById(params.get("event"));
   const listings = buildListings(currentEvent);
   const listing = listings.find((item) => item.id === params.get("listing")) || listings[0];
-  const requestedQuantity = Number.parseInt(params.get("qty"), 10) || 2;
+  const requestedQuantity = Number.parseInt(params.get("qty"), 10) || 1;
   const quantity = listing.quantities.includes(requestedQuantity) ? requestedQuantity : listing.quantities[0];
   const originalSubtotal = listing.originalPrice * quantity;
   const subtotal = listing.price * quantity;
@@ -686,7 +815,7 @@ function renderTourRows() {
               <span>${event.venue}</span>
             </div>
             <p class="tour-support">${event.support.join(", ")}</p>
-            <p class="tour-market">${decoratePriceText(`From ${formatCurrency(event.priceFrom)} | Avg ${formatCurrency(event.averagePrice)} | ${formatNumber(event.availableTickets)} tickets`)}</p>
+            <p class="tour-market">${buildTourMarketMarkup(event)}</p>
           </div>
 
           <div class="tour-city">
@@ -697,7 +826,7 @@ function renderTourRows() {
           <div class="tour-ticket">
             <a class="ticket-link" href="${buildTicketUrl(event.id)}">
               <span>Tickets</span>
-              <small>${decoratePriceText(`From ${formatCurrency(event.priceFrom)}`)}</small>
+              <small>${buildTicketLinkPriceMarkup(event.priceFrom)}</small>
             </a>
           </div>
         </article>
@@ -826,7 +955,7 @@ function renderTicketOverviewPage() {
   const overviewLaunchNote = document.getElementById("overviewLaunchNote");
 
   let currentEvent = getEventById(params.get("event"));
-  let selectedQuantity = Number.parseInt(params.get("qty"), 10) || Number.parseInt(quantitySelect.value, 10) || 2;
+  let selectedQuantity = Number.parseInt(params.get("qty"), 10) || Number.parseInt(quantitySelect.value, 10) || 1;
   let activeZone = params.get("zone") || "all";
 
   function syncUrl() {
@@ -853,12 +982,12 @@ function renderTicketOverviewPage() {
     eventTitle.textContent = `${currentEvent.city} | ${currentEvent.venue}`;
     ticketMeta.textContent = `${currentEvent.dateLabel} | ${currentEvent.weekday} | ${currentEvent.time} | ${currentEvent.support.join(", ")}. Review the halls below, then open the separate listings page.`;
     ticketHeroChips.innerHTML = [
-      `${buildDiscountPriceMarkup(currentEvent.priceFrom)} lowest entry`,
-      `${buildDiscountPriceMarkup(currentEvent.averagePrice)} average market price`,
-      `${formatNumber(currentEvent.availableTickets)} tickets available`,
-      `${currentEvent.capacity.toLocaleString("en-US")} venue capacity`
+      { value: buildDiscountPriceMarkup(currentEvent.priceFrom), label: "Lowest entry" },
+      { value: buildDiscountPriceMarkup(currentEvent.averagePrice), label: "Average market price" },
+      { value: formatNumber(currentEvent.availableTickets), label: "Tickets available" },
+      { value: currentEvent.capacity.toLocaleString("en-US"), label: "Venue capacity" }
     ]
-      .map((chip) => `<span class="ticket-chip">${chip}</span>`)
+      .map((chip) => buildHeroChipMarkup(chip.value, chip.label))
       .join("");
   }
 
@@ -974,7 +1103,7 @@ function renderTicketOverviewPage() {
   });
 
   quantitySelect.addEventListener("change", () => {
-    selectedQuantity = Number.parseInt(quantitySelect.value, 10) || 2;
+    selectedQuantity = Number.parseInt(quantitySelect.value, 10) || 1;
     syncUrl();
     updateLaunchLinks();
   });
@@ -1019,7 +1148,7 @@ function renderListingsPage() {
 
   let currentEvent = getEventById(params.get("event"));
   let currentListings = buildListings(currentEvent);
-  let selectedQuantity = Number.parseInt(params.get("qty"), 10) || Number.parseInt(quantitySelect.value, 10) || 2;
+  let selectedQuantity = Number.parseInt(params.get("qty"), 10) || Number.parseInt(quantitySelect ? quantitySelect.value : "", 10) || 1;
   let selectedListingId = params.get("listing") || currentListings[0].id;
   let activeZone = params.get("zone") || "all";
 
@@ -1034,14 +1163,14 @@ function renderListingsPage() {
       listingsBackLink.href = buildTicketUrl(currentEvent.id);
     }
     eventTitle.textContent = `${currentEvent.city} | ${currentEvent.venue}`;
-    ticketMeta.textContent = `${currentEvent.dateLabel} | ${currentEvent.weekday} | ${currentEvent.time} | ${currentEvent.support.join(", ")}. Compare live-style order listings, then continue to checkout.`;
+    ticketMeta.textContent = `${currentEvent.dateLabel} | ${currentEvent.weekday} | ${currentEvent.time} | ${currentEvent.support.join(", ")}. Compare the available order listings for this event, then continue to checkout.`;
     ticketHeroChips.innerHTML = [
-      `${buildDiscountPriceMarkup(currentEvent.priceFrom)} lowest entry`,
-      `${buildDiscountPriceMarkup(currentEvent.averagePrice)} average market price`,
-      `${formatNumber(currentEvent.availableTickets)} tickets available`,
-      `${currentEvent.capacity.toLocaleString("en-US")} venue capacity`
+      { value: buildDiscountPriceMarkup(currentEvent.priceFrom), label: "Lowest entry" },
+      { value: buildDiscountPriceMarkup(currentEvent.averagePrice), label: "Average market price" },
+      { value: formatNumber(currentEvent.availableTickets), label: "Tickets available" },
+      { value: currentEvent.capacity.toLocaleString("en-US"), label: "Venue capacity" }
     ]
-      .map((chip) => `<span class="ticket-chip">${chip}</span>`)
+      .map((chip) => buildHeroChipMarkup(chip.value, chip.label))
       .join("");
   }
 
@@ -1064,6 +1193,10 @@ function renderListingsPage() {
   }
 
   function updateZones() {
+    if (!zoneList) {
+      return;
+    }
+
     zoneList.innerHTML = buildZones(currentEvent)
       .map(
         (zone) => {
@@ -1116,17 +1249,20 @@ function renderListingsPage() {
   }
 
   function renderListings() {
-    const maxPrice = Number.parseInt(priceRange.value, 10);
+    const maxPrice = priceRange ? Number.parseInt(priceRange.value, 10) : Math.max(...currentListings.map((listing) => listing.originalPrice));
+    const selectedDelivery = deliverySelect ? deliverySelect.value : "all";
+    const searchValue = listingSearch ? listingSearch.value.trim().toLowerCase() : "";
+    const sortMode = sortSelect ? sortSelect.value : "recommended";
     const filtered = sortListings(
       currentListings.filter((listing) => {
         const matchesQuantity = listing.quantities.includes(selectedQuantity);
-        const matchesDelivery = deliverySelect.value === "all" || listing.delivery === deliverySelect.value;
-        const matchesSearch = `${listing.section} ${listing.zone} ${listing.note}`.toLowerCase().includes(listingSearch.value.trim().toLowerCase());
+        const matchesDelivery = selectedDelivery === "all" || listing.delivery === selectedDelivery;
+        const matchesSearch = `${listing.section} ${listing.zone} ${listing.note}`.toLowerCase().includes(searchValue);
         const matchesPrice = listing.originalPrice <= maxPrice;
         const matchesZone = activeZone === "all" || listing.zone === activeZone;
         return matchesQuantity && matchesDelivery && matchesSearch && matchesPrice && matchesZone;
       }),
-      sortSelect.value
+      sortMode
     );
     const previousListingId = selectedListingId;
 
@@ -1135,14 +1271,13 @@ function renderListingsPage() {
     }
 
     const zoneSuffix = activeZone === "all" ? "" : ` in ${activeZone.toLowerCase()}`;
-    resultsCount.textContent = `${filtered.length} listing${filtered.length === 1 ? "" : "s"} match your filters${zoneSuffix}`;
+    resultsCount.textContent = `${filtered.length} listing${filtered.length === 1 ? "" : "s"} currently available${zoneSuffix} for ${selectedQuantity} ticket${selectedQuantity === 1 ? "" : "s"}`;
     summaryQuantity.textContent = `${selectedQuantity} ticket${selectedQuantity === 1 ? "" : "s"}`;
 
     if (!filtered.length) {
       listingGrid.innerHTML = `
         <div class="empty-state">
-          <p class="order-note">No listings match the current filters.</p>
-          <button class="empty-button" type="button" id="resetFiltersButton">Reset filters</button>
+          <p class="order-note">No listings are available right now for ${selectedQuantity} ticket${selectedQuantity === 1 ? "" : "s"}${zoneSuffix}.</p>
         </div>
       `;
 
@@ -1154,21 +1289,6 @@ function renderListingsPage() {
       checkoutLink.href = buildCheckoutUrl(currentEvent.id, currentListings[0].id, selectedQuantity);
       if (previousListingId !== selectedListingId) {
         syncUrl();
-      }
-
-      const resetButton = document.getElementById("resetFiltersButton");
-      if (resetButton) {
-        resetButton.addEventListener("click", () => {
-          deliverySelect.value = "all";
-          sortSelect.value = "recommended";
-          listingSearch.value = "";
-          priceRange.value = priceRange.max;
-          activeZone = "all";
-          selectedListingId = currentListings[0].id;
-          syncUrl();
-          updateZones();
-          renderListings();
-        });
       }
       return;
     }
@@ -1231,10 +1351,12 @@ function renderListingsPage() {
     const minListingPrice = Math.min(...currentListings.map((listing) => listing.originalPrice));
     const maxListingPrice = Math.max(...currentListings.map((listing) => listing.originalPrice));
 
-    priceRange.min = String(minListingPrice);
-    priceRange.max = String(maxListingPrice);
-    priceRange.value = String(maxListingPrice);
-    priceRangeLabel.innerHTML = `Max price per ticket | ${buildDiscountPriceMarkup(maxListingPrice)}`;
+    if (priceRange && priceRangeLabel) {
+      priceRange.min = String(minListingPrice);
+      priceRange.max = String(maxListingPrice);
+      priceRange.value = String(maxListingPrice);
+      priceRangeLabel.innerHTML = `Max price per ticket | ${buildDiscountPriceMarkup(maxListingPrice)}`;
+    }
     if (!currentListings.some((listing) => listing.id === selectedListingId)) {
       selectedListingId = currentListings[0].id;
     }
@@ -1247,33 +1369,49 @@ function renderListingsPage() {
     syncUrl();
   }
 
-  eventSelect.innerHTML = siteData.events
-    .map(
-      (event) => `<option value="${event.id}" ${event.id === currentEvent.id ? "selected" : ""}>${event.dateLabel} | ${event.city}</option>`
-    )
-    .join("");
-  quantitySelect.value = String(selectedQuantity);
+  if (eventSelect) {
+    eventSelect.innerHTML = siteData.events
+      .map(
+        (event) => `<option value="${event.id}" ${event.id === currentEvent.id ? "selected" : ""}>${event.dateLabel} | ${event.city}</option>`
+      )
+      .join("");
+  }
+  if (quantitySelect) {
+    quantitySelect.value = String(selectedQuantity);
+  }
 
-  eventSelect.addEventListener("change", () => {
-    currentEvent = getEventById(eventSelect.value);
-    selectedListingId = buildListings(currentEvent)[0].id;
-    activeZone = "all";
-    refreshEvent();
-  });
+  if (eventSelect) {
+    eventSelect.addEventListener("change", () => {
+      currentEvent = getEventById(eventSelect.value);
+      selectedListingId = buildListings(currentEvent)[0].id;
+      activeZone = "all";
+      refreshEvent();
+    });
+  }
 
-  quantitySelect.addEventListener("change", () => {
-    selectedQuantity = Number.parseInt(quantitySelect.value, 10) || 2;
-    syncUrl();
-    renderListings();
-  });
+  if (quantitySelect) {
+    quantitySelect.addEventListener("change", () => {
+      selectedQuantity = Number.parseInt(quantitySelect.value, 10) || 1;
+      syncUrl();
+      renderListings();
+    });
+  }
 
-  deliverySelect.addEventListener("change", renderListings);
-  sortSelect.addEventListener("change", renderListings);
-  listingSearch.addEventListener("input", renderListings);
-  priceRange.addEventListener("input", () => {
-    priceRangeLabel.innerHTML = `Max price per ticket | ${buildDiscountPriceMarkup(Number.parseInt(priceRange.value, 10))}`;
-    renderListings();
-  });
+  if (deliverySelect) {
+    deliverySelect.addEventListener("change", renderListings);
+  }
+  if (sortSelect) {
+    sortSelect.addEventListener("change", renderListings);
+  }
+  if (listingSearch) {
+    listingSearch.addEventListener("input", renderListings);
+  }
+  if (priceRange && priceRangeLabel) {
+    priceRange.addEventListener("input", () => {
+      priceRangeLabel.innerHTML = `Max price per ticket | ${buildDiscountPriceMarkup(Number.parseInt(priceRange.value, 10))}`;
+      renderListings();
+    });
+  }
 
   refreshEvent();
 }
@@ -1369,28 +1507,18 @@ function renderPaymentPage() {
   const paymentMethodGrid = document.getElementById("paymentMethodGrid");
   const paymentMethodButtons = Array.from(paymentMethodGrid.querySelectorAll("[data-method]"));
   const paymentDetailCard = document.getElementById("paymentDetailCard");
+  const paymentDisclaimer = document.getElementById("paymentDisclaimer");
+  const paymentConvertedAmount = document.getElementById("paymentConvertedAmount");
+  const paymentConverterMeta = document.getElementById("paymentConverterMeta");
   const copyPaymentAddress = document.getElementById("copyPaymentAddress");
   const paymentSentButton = document.getElementById("paymentSentButton");
   const paymentMessage = document.getElementById("paymentMessage");
-
-  const paymentMethods = {
-    btc: {
-      label: "BTC",
-      badge: "BTC",
-      title: "Bitcoin wallet transfer",
-      description: "Use any BTC wallet to send the crypto equivalent of your order total to the wallet address below.",
-      addressLabel: "BTC wallet address",
-      address: paymentData.btcAddress,
-      copyLabel: "BTC wallet address",
-      instructions: [
-        `Order total to cover: ${formatCurrency(originalTotal)}.`,
-        "Check the live BTC equivalent in your wallet right before sending.",
-        "Review the destination address carefully before you confirm the transfer."
-      ]
-    }
-  };
+  const paymentMethods = getPaymentMethods(total);
 
   let selectedMethod = paymentMethods[params.get("method")] ? params.get("method") : "";
+  let liveRates = null;
+  let converterStatus = "idle";
+  let converterSnapshot = "";
 
   paymentBackLink.href = buildCheckoutUrl(currentEvent.id, listing.id, quantity);
   paymentEventTitle.textContent = `${currentEvent.city} | ${currentEvent.dateLabel}`;
@@ -1418,6 +1546,63 @@ function renderPaymentPage() {
     window.history.replaceState({}, "", nextUrl);
   }
 
+  function renderConverter() {
+    if (!paymentConvertedAmount || !paymentConverterMeta || !paymentDisclaimer) {
+      return;
+    }
+
+    if (!selectedMethod) {
+      paymentConvertedAmount.textContent = "Choose BTC, ETH, or USDT";
+      paymentConverterMeta.textContent = "Select a crypto method to load the live converted amount for this order.";
+      paymentDisclaimer.textContent =
+        "This order is matched against the wallet address and exact converted amount shown on this page. Do not send below or above the required amount, or the transaction may be ignored during review.";
+      return;
+    }
+
+    if (converterStatus === "loading" || converterStatus === "idle") {
+      paymentConvertedAmount.textContent = "Loading live converter...";
+      paymentConverterMeta.textContent = `Loading the live ${paymentMethods[selectedMethod].label} amount for ${formatCurrency(total)}.`;
+      paymentDisclaimer.textContent =
+        "This order is matched against the wallet address and exact converted amount shown on this page. Do not send below or above the required amount, or the transaction may be ignored during review.";
+      return;
+    }
+
+    if (converterStatus === "error" || !liveRates) {
+      paymentConvertedAmount.textContent = "Live conversion unavailable";
+      paymentConverterMeta.textContent = "We could not load the live converter for this page. Please confirm the exact crypto amount in your sending wallet before you transfer.";
+      paymentDisclaimer.textContent =
+        "This order is matched against the wallet address and exact amount for this page. If you cannot load the converter, do not guess the amount, and do not send below or above the required value.";
+      return;
+    }
+
+    const methodRate = liveRates[selectedMethod];
+    const fractionDigits = selectedMethod === "btc" ? 8 : 6;
+    const convertedAmount = total * methodRate;
+    const formattedAmount = `${formatCryptoAmount(convertedAmount, fractionDigits)} ${paymentMethods[selectedMethod].label}`;
+
+    paymentConvertedAmount.textContent = formattedAmount;
+    paymentConverterMeta.textContent = `Live converter snapshot for ${formatCurrency(total)} via ${paymentMethods[selectedMethod].label}${converterSnapshot ? ` | ${converterSnapshot}` : ""}. Send exactly this amount.`;
+    paymentDisclaimer.textContent =
+      "This order is matched against the wallet address and exact converted amount shown on this page. Do not send below or above the required amount, or the transaction may be ignored during review.";
+  }
+
+  async function loadLiveRates() {
+    converterStatus = "loading";
+    renderConverter();
+
+    try {
+      liveRates = await fetchUsdCryptoRates();
+      converterStatus = "ready";
+      converterSnapshot = `loaded ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+    } catch (error) {
+      liveRates = null;
+      converterStatus = "error";
+      converterSnapshot = "";
+    }
+
+    renderConverter();
+  }
+
   function renderSelectedMethod() {
     paymentMethodButtons.forEach((button) => {
       const isSelected = button.getAttribute("data-method") === selectedMethod;
@@ -1426,9 +1611,10 @@ function renderPaymentPage() {
     });
 
     if (!selectedMethod) {
-      paymentDetailCard.innerHTML = `<p class="order-note">Choose BTC to reveal the payment instructions and wallet address. Cash App is currently unavailable.</p>`;
+      paymentDetailCard.innerHTML = `<p class="order-note">Choose BTC, ETH, or USDT to reveal the payment instructions and wallet address. Cash App is currently unavailable.</p>`;
       copyPaymentAddress.hidden = true;
       paymentSentButton.hidden = true;
+      renderConverter();
       return;
     }
 
@@ -1448,6 +1634,7 @@ function renderPaymentPage() {
     copyPaymentAddress.hidden = false;
     paymentSentButton.hidden = false;
     copyPaymentAddress.textContent = `Copy ${method.copyLabel}`;
+    renderConverter();
   }
 
   paymentMethodButtons.forEach((button) => {
@@ -1477,15 +1664,82 @@ function renderPaymentPage() {
       return;
     }
 
-    const buyerName = buyerProfile ? `${buyerProfile.firstName} ${buyerProfile.lastName}`.trim() || "the buyer" : "the buyer";
-    setPaymentMessage(
-      `Payment marked as sent for ${buyerName} via ${paymentMethods[selectedMethod].label}. Keep the wallet reference ready for the ${currentEvent.city} order.`,
-      true
-    );
+    window.location.href = buildConfirmationUrl(currentEvent.id, listing.id, quantity, selectedMethod);
   });
 
   syncPaymentUrl();
   renderSelectedMethod();
+  loadLiveRates();
+}
+
+function renderConfirmationPage() {
+  const confirmationEventTitle = document.getElementById("confirmationEventTitle");
+  if (!confirmationEventTitle) {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const orderContext = getOrderContext(params);
+  const { currentEvent, listing, quantity, originalSubtotal, subtotal, originalFees, fees, originalTotal, total } = orderContext;
+  const buyerProfile = getCheckoutProfileForOrder(orderContext);
+  const paymentMethods = getPaymentMethods(total);
+  const selectedMethod = paymentMethods[params.get("method")] ? params.get("method") : "";
+  const chosenMethod = paymentMethods[selectedMethod] || null;
+
+  document.title = `${currentEvent.city} Confirmation | Morgan Wallen`;
+
+  const confirmationBackLink = document.getElementById("confirmationBackLink");
+  const confirmationEventMeta = document.getElementById("confirmationEventMeta");
+  const confirmationMethodBadge = document.getElementById("confirmationMethodBadge");
+  const confirmationStatusTitle = document.getElementById("confirmationStatusTitle");
+  const confirmationStatusCopy = document.getElementById("confirmationStatusCopy");
+  const confirmationStatusValue = document.getElementById("confirmationStatusValue");
+  const confirmationReviewWindow = document.getElementById("confirmationReviewWindow");
+  const confirmationBuyerName = document.getElementById("confirmationBuyerName");
+  const confirmationPaymentLink = document.getElementById("confirmationPaymentLink");
+  const confirmationSummaryTitle = document.getElementById("confirmationSummaryTitle");
+  const confirmationTicketCard = document.getElementById("confirmationTicketCard");
+  const confirmationMethodValue = document.getElementById("confirmationMethodValue");
+  const confirmationSubtotal = document.getElementById("confirmationSubtotal");
+  const confirmationFees = document.getElementById("confirmationFees");
+  const confirmationTotal = document.getElementById("confirmationTotal");
+  const confirmationWalletLabel = document.getElementById("confirmationWalletLabel");
+  const confirmationWalletValue = document.getElementById("confirmationWalletValue");
+
+  confirmationBackLink.href = buildPaymentUrl(currentEvent.id, listing.id, quantity, selectedMethod);
+  confirmationPaymentLink.href = buildPaymentUrl(currentEvent.id, listing.id, quantity, selectedMethod);
+  confirmationEventTitle.textContent = `${currentEvent.city} | ${currentEvent.dateLabel}`;
+  confirmationEventMeta.textContent = `${currentEvent.venue} | ${currentEvent.support.join(", ")} | Market snapshot ${siteData.snapshotDate}`;
+  confirmationSummaryTitle.textContent = `${currentEvent.city} | ${currentEvent.dateLabel}`;
+  confirmationTicketCard.innerHTML = `
+    <span class="summary-kicker">${listing.flag}</span>
+    <h3>${listing.section} | Row ${listing.row}</h3>
+    <p class="order-note">${listing.zone} | ${listing.delivery}</p>
+    <p class="order-note">${decoratePriceText(`${quantity} ticket${quantity === 1 ? "" : "s"} selected | ${formatCurrency(listing.originalPrice)} each`)}</p>
+  `;
+  confirmationSubtotal.innerHTML = buildDiscountPriceMarkup(originalSubtotal, { discountedValue: subtotal });
+  confirmationFees.innerHTML = buildDiscountPriceMarkup(originalFees, { discountedValue: fees });
+  confirmationTotal.innerHTML = buildDiscountPriceMarkup(originalTotal, { discountedValue: total });
+  confirmationReviewWindow.textContent = "Up to 45 minutes";
+  confirmationBuyerName.textContent = buyerProfile ? `${buyerProfile.firstName} ${buyerProfile.lastName}`.trim() || "Buyer details saved" : "Buyer details not loaded";
+
+  if (chosenMethod) {
+    confirmationMethodBadge.textContent = chosenMethod.badge;
+    confirmationStatusTitle.textContent = "Checking transaction";
+    confirmationStatusCopy.textContent = `We recorded this order as paid via ${chosenMethod.label}. Transaction review can take up to 45 minutes before confirmation is shown for the ${currentEvent.city} order.`;
+    confirmationStatusValue.textContent = "Checking transaction";
+    confirmationMethodValue.textContent = chosenMethod.label;
+    confirmationWalletLabel.textContent = chosenMethod.addressLabel;
+    confirmationWalletValue.textContent = chosenMethod.address;
+  } else {
+    confirmationMethodBadge.textContent = "Pending";
+    confirmationStatusTitle.textContent = "Awaiting payment method";
+    confirmationStatusCopy.textContent = "This confirmation view does not have a payment method attached. Return to the payment page and choose BTC, ETH, or USDT to continue.";
+    confirmationStatusValue.textContent = "Pending selection";
+    confirmationMethodValue.textContent = "Not selected";
+    confirmationWalletLabel.textContent = "Payment address";
+    confirmationWalletValue.textContent = "Return to the payment page to choose BTC, ETH, or USDT.";
+  }
 }
 
 function init() {
@@ -1504,6 +1758,9 @@ function init() {
   }
   if (page === "payment") {
     renderPaymentPage();
+  }
+  if (page === "confirmation") {
+    renderConfirmationPage();
   }
 }
 

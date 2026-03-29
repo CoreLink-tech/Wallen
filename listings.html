@@ -37,7 +37,7 @@
     </header>
 
     <main class="ticket-page listings-page">
-      <noscript class="no-script">Enable JavaScript to switch events, filter listings, and continue into checkout.</noscript>
+      <noscript class="no-script">Enable JavaScript to load the available listings and continue into checkout.</noscript>
 
       <section class="ticket-hero">
         <a class="back-link" id="listingsBackLink" href="tickets.html">Back to event overview</a>
@@ -52,75 +52,15 @@
           <aside class="ticket-hero-note ticket-hero-note-emphasis">
             <p class="eyebrow">Step 2</p>
             <p class="market-caption">
-              This page is dedicated to the live-style order cards. Compare hall filters, price bands, and checkout-ready totals without losing the event context from the overview page.
+              This page is dedicated to the available order cards. Compare live pricing and checkout-ready totals here while keeping the hall choice carried over from the overview page.
             </p>
           </aside>
         </div>
       </section>
 
-      <section class="filter-bar" id="ticketFilters" aria-label="Ticket filters">
-        <label class="filter-field">
-          <span>Event</span>
-          <select id="eventSelect"></select>
-        </label>
-
-        <label class="filter-field">
-          <span>Quantity</span>
-          <select id="quantitySelect">
-            <option value="1">1 ticket</option>
-            <option value="2" selected>2 tickets</option>
-            <option value="3">3 tickets</option>
-            <option value="4">4 tickets</option>
-            <option value="5">5 tickets</option>
-            <option value="6">6 tickets</option>
-          </select>
-        </label>
-
-        <label class="filter-field">
-          <span>Delivery</span>
-          <select id="deliverySelect">
-            <option value="all">All delivery</option>
-            <option value="Mobile transfer">Mobile transfer</option>
-            <option value="Instant download">Instant download</option>
-          </select>
-        </label>
-
-        <label class="filter-field">
-          <span>Sort</span>
-          <select id="sortSelect">
-            <option value="recommended">Recommended</option>
-            <option value="lowest">Lowest price</option>
-            <option value="highest">Highest price</option>
-            <option value="closest">Closest to stage</option>
-          </select>
-        </label>
-
-        <label class="filter-field">
-          <span>Search</span>
-          <input id="listingSearch" type="search" placeholder="Section, hall, note" />
-        </label>
-
-        <label class="filter-field">
-          <span id="priceRangeLabel">Max price per ticket</span>
-          <input id="priceRange" type="range" />
-        </label>
-      </section>
-
       <section class="ticket-layout listing-layout">
         <div class="ticket-main-column">
           <section class="market-grid" id="marketGrid" aria-label="Market stats"></section>
-
-          <section class="zone-stage compact-zone-stage">
-            <div class="zone-stage-copy">
-              <p class="eyebrow">Refine By Hall</p>
-              <h2>Choose your hall lane</h2>
-              <p class="section-lead">
-                Keep narrowing the order list by hall before choosing the actual card you want to carry into checkout.
-              </p>
-            </div>
-
-            <div class="zone-list" id="zoneList" aria-label="Seat zones"></div>
-          </section>
 
           <section class="listings-stage">
             <div class="listings-head">
@@ -142,9 +82,9 @@
             </details>
 
             <details>
-              <summary>What filters are carrying the most weight?</summary>
+              <summary>What carries over from the previous page?</summary>
               <p class="faq-answer">
-                Quantity, hall, delivery method, and price ceiling will usually shape the list fastest, especially on dates where premium inventory moves ahead of lower bowl value.
+                The selected quantity and hall from the overview page carry over automatically, so this page can stay focused on the available order cards only.
               </p>
             </details>
 
@@ -165,7 +105,7 @@
 
           <div class="summary-line">
             <span>Selected quantity</span>
-            <strong id="summaryQuantity">2 tickets</strong>
+            <strong id="summaryQuantity">1 ticket</strong>
           </div>
 
           <div class="summary-line">

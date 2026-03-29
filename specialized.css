@@ -610,7 +610,7 @@ textarea {
 
 .tour-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(220px, 0.8fr) 220px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(240px, 0.82fr) minmax(250px, 280px);
   min-height: 136px;
   border-bottom: 2px solid var(--paper-line);
   transition: background-color 0.24s ease;
@@ -629,6 +629,43 @@ textarea {
 
 .tour-main {
   gap: 10px;
+}
+
+.tour-market {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.tour-market-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  align-items: center;
+}
+
+.tour-market-label,
+.ticket-link-price-label,
+.ticket-chip-caption {
+  font-family: "Special Elite", serif;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tour-market-label,
+.ticket-link-price-label {
+  color: rgba(93, 72, 45, 0.8);
+}
+
+.tour-market-divider {
+  color: rgba(93, 72, 45, 0.42);
+}
+
+.tour-market-volume {
+  white-space: nowrap;
 }
 
 .tour-city,
@@ -701,9 +738,10 @@ textarea {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 10px;
   text-decoration: none;
   color: var(--ink);
+  text-align: center;
   transition: color 0.2s ease, background-color 0.2s ease;
 }
 
@@ -718,6 +756,13 @@ textarea {
 .ticket-link:focus-visible {
   color: var(--accent);
   background: rgba(73, 62, 38, 0.03);
+}
+
+.ticket-link-price {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: min(100%, 180px);
 }
 
 .content-stage,
@@ -938,11 +983,13 @@ textarea {
 .ticket-hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
-  gap: 18px;
+  gap: 24px;
+  align-items: start;
 }
 
 .ticket-hero-note {
   padding: 22px;
+  align-self: start;
 }
 
 .ticket-hero-note-emphasis {
@@ -971,21 +1018,28 @@ textarea {
 }
 
 .ticket-chip-row {
-  grid-template-columns: repeat(auto-fit, minmax(160px, max-content));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
 }
 
 .ticket-chip {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  padding: 10px 14px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  width: 100%;
+  min-height: 100%;
+  padding: 14px 16px;
   border: 1px solid rgba(255, 240, 205, 0.14);
-  border-radius: 999px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.03);
   font-family: "Special Elite", serif;
   font-size: 0.86rem;
   color: rgba(248, 235, 205, 0.82);
   text-transform: none;
+}
+
+.ticket-chip-value {
+  display: block;
 }
 
 .filter-bar {
@@ -1565,6 +1619,36 @@ textarea {
   gap: 4px 8px;
 }
 
+.ticket-chip .price-comparison,
+.tour-market .price-comparison,
+.ticket-link small .price-comparison {
+  max-width: 100%;
+}
+
+.ticket-chip .price-comparison {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.tour-market .price-comparison {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.ticket-link small .price-comparison {
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.ticket-chip .price-discount-copy,
+.ticket-link small .price-discount-copy {
+  white-space: normal;
+  text-wrap: balance;
+}
+
 .payment-method-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1652,6 +1736,19 @@ textarea {
   line-height: 1.6;
   color: rgba(248, 235, 205, 0.78);
   text-transform: none;
+}
+
+.payment-disclaimer {
+  margin-top: 16px;
+}
+
+.payment-converter-card {
+  margin-top: 16px;
+}
+
+.payment-converter-value {
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 0.95;
 }
 
 .payment-instruction-list li::before {
