@@ -483,13 +483,13 @@ function getPaymentMethods(totalDue) {
       label: "BTC",
       badge: "BTC",
       title: "Bitcoin wallet transfer",
-      description: "Use any BTC wallet to send the crypto equivalent of your order total to the wallet address below.",
+      description: "Use any BTC wallet to send your payment for this order to the wallet address below.",
       addressLabel: "BTC wallet address",
       address: paymentData.btcAddress,
       copyLabel: "BTC wallet address",
       instructions: [
-        `Order total to cover today: ${formatCurrency(totalDue)}.`,
-        "Confirm the exact BTC amount in your wallet before you send.",
+        `Order total for this order: ${formatCurrency(totalDue)}.`,
+        "Send your BTC payment to the wallet address shown below.",
         "Review the destination address carefully before you confirm the transfer."
       ]
     },
@@ -497,13 +497,13 @@ function getPaymentMethods(totalDue) {
       label: "ETH",
       badge: "ETH",
       title: "Ethereum wallet transfer",
-      description: "Use any ETH wallet to send the crypto equivalent of your order total to the address below.",
+      description: "Use any ETH wallet to send your payment for this order to the wallet address below.",
       addressLabel: "ETH wallet address",
       address: paymentData.ethAddress,
       copyLabel: "ETH wallet address",
       instructions: [
-        `Order total to cover today: ${formatCurrency(totalDue)}.`,
-        "Confirm the exact ETH amount in your wallet before you send.",
+        `Order total for this order: ${formatCurrency(totalDue)}.`,
+        "Send your ETH payment to the wallet address shown below.",
         "Review the destination address carefully before you confirm the transfer."
       ]
     },
@@ -516,8 +516,8 @@ function getPaymentMethods(totalDue) {
       address: paymentData.usdtAddress,
       copyLabel: "USDT wallet address",
       instructions: [
-        `Order total to cover today: ${formatCurrency(totalDue)} in USDT.`,
-        "Confirm the exact USDT amount in your wallet before you send.",
+        `Order total for this order: ${formatCurrency(totalDue)}.`,
+        "Send your USDT payment to the wallet address shown below.",
         "Review the destination address carefully before you confirm the transfer."
       ]
     }
