@@ -1742,15 +1742,6 @@ textarea {
   margin-top: 16px;
 }
 
-.payment-converter-card {
-  margin-top: 16px;
-}
-
-.payment-converter-value {
-  font-size: clamp(2rem, 3vw, 3rem);
-  line-height: 0.95;
-}
-
 .payment-instruction-list li::before {
   content: "";
   position: absolute;

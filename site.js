@@ -477,38 +477,6 @@ function buildConfirmationUrl(eventId, listingId, quantity, method = "") {
   return `confirmation.html?${params.toString()}`;
 }
 
-function formatCryptoAmount(value, fractionDigits) {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits
-  }).format(value);
-}
-
-async function fetchUsdCryptoRates() {
-  const response = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD");
-  if (!response.ok) {
-    throw new Error(`Rate request failed with status ${response.status}`);
-  }
-
-  const payload = await response.json();
-  const rates = payload?.data?.rates;
-  if (!rates) {
-    throw new Error("Rate payload missing");
-  }
-
-  const parsedRates = {
-    btc: Number.parseFloat(rates.BTC),
-    eth: Number.parseFloat(rates.ETH),
-    usdt: Number.parseFloat(rates.USDT)
-  };
-
-  if (!Object.values(parsedRates).every((value) => Number.isFinite(value) && value > 0)) {
-    throw new Error("Required crypto rates missing");
-  }
-
-  return parsedRates;
-}
-
 function getPaymentMethods(totalDue) {
   return {
     btc: {
@@ -521,7 +489,7 @@ function getPaymentMethods(totalDue) {
       copyLabel: "BTC wallet address",
       instructions: [
         `Order total to cover today: ${formatCurrency(totalDue)}.`,
-        "Send the exact BTC amount shown in the converter card below for this order.",
+        "Confirm the exact BTC amount in your wallet before you send.",
         "Review the destination address carefully before you confirm the transfer."
       ]
     },
@@ -535,7 +503,7 @@ function getPaymentMethods(totalDue) {
       copyLabel: "ETH wallet address",
       instructions: [
         `Order total to cover today: ${formatCurrency(totalDue)}.`,
-        "Send the exact ETH amount shown in the converter card below for this order.",
+        "Confirm the exact ETH amount in your wallet before you send.",
         "Review the destination address carefully before you confirm the transfer."
       ]
     },
@@ -549,7 +517,7 @@ function getPaymentMethods(totalDue) {
       copyLabel: "USDT wallet address",
       instructions: [
         `Order total to cover today: ${formatCurrency(totalDue)} in USDT.`,
-        "Send the exact USDT amount shown in the converter card below for this order.",
+        "Confirm the exact USDT amount in your wallet before you send.",
         "Review the destination address carefully before you confirm the transfer."
       ]
     }
@@ -1507,18 +1475,12 @@ function renderPaymentPage() {
   const paymentMethodGrid = document.getElementById("paymentMethodGrid");
   const paymentMethodButtons = Array.from(paymentMethodGrid.querySelectorAll("[data-method]"));
   const paymentDetailCard = document.getElementById("paymentDetailCard");
-  const paymentDisclaimer = document.getElementById("paymentDisclaimer");
-  const paymentConvertedAmount = document.getElementById("paymentConvertedAmount");
-  const paymentConverterMeta = document.getElementById("paymentConverterMeta");
   const copyPaymentAddress = document.getElementById("copyPaymentAddress");
   const paymentSentButton = document.getElementById("paymentSentButton");
   const paymentMessage = document.getElementById("paymentMessage");
   const paymentMethods = getPaymentMethods(total);
 
   let selectedMethod = paymentMethods[params.get("method")] ? params.get("method") : "";
-  let liveRates = null;
-  let converterStatus = "idle";
-  let converterSnapshot = "";
 
   paymentBackLink.href = buildCheckoutUrl(currentEvent.id, listing.id, quantity);
   paymentEventTitle.textContent = `${currentEvent.city} | ${currentEvent.dateLabel}`;
@@ -1546,63 +1508,6 @@ function renderPaymentPage() {
     window.history.replaceState({}, "", nextUrl);
   }
 
-  function renderConverter() {
-    if (!paymentConvertedAmount || !paymentConverterMeta || !paymentDisclaimer) {
-      return;
-    }
-
-    if (!selectedMethod) {
-      paymentConvertedAmount.textContent = "Choose BTC, ETH, or USDT";
-      paymentConverterMeta.textContent = "Select a crypto method to load the live converted amount for this order.";
-      paymentDisclaimer.textContent =
-        "This order is matched against the wallet address and exact converted amount shown on this page. Do not send below or above the required amount, or the transaction may be ignored during review.";
-      return;
-    }
-
-    if (converterStatus === "loading" || converterStatus === "idle") {
-      paymentConvertedAmount.textContent = "Loading live converter...";
-      paymentConverterMeta.textContent = `Loading the live ${paymentMethods[selectedMethod].label} amount for ${formatCurrency(total)}.`;
-      paymentDisclaimer.textContent =
-        "This order is matched against the wallet address and exact converted amount shown on this page. Do not send below or above the required amount, or the transaction may be ignored during review.";
-      return;
-    }
-
-    if (converterStatus === "error" || !liveRates) {
-      paymentConvertedAmount.textContent = "Live conversion unavailable";
-      paymentConverterMeta.textContent = "We could not load the live converter for this page. Please confirm the exact crypto amount in your sending wallet before you transfer.";
-      paymentDisclaimer.textContent =
-        "This order is matched against the wallet address and exact amount for this page. If you cannot load the converter, do not guess the amount, and do not send below or above the required value.";
-      return;
-    }
-
-    const methodRate = liveRates[selectedMethod];
-    const fractionDigits = selectedMethod === "btc" ? 8 : 6;
-    const convertedAmount = total * methodRate;
-    const formattedAmount = `${formatCryptoAmount(convertedAmount, fractionDigits)} ${paymentMethods[selectedMethod].label}`;
-
-    paymentConvertedAmount.textContent = formattedAmount;
-    paymentConverterMeta.textContent = `Live converter snapshot for ${formatCurrency(total)} via ${paymentMethods[selectedMethod].label}${converterSnapshot ? ` | ${converterSnapshot}` : ""}. Send exactly this amount.`;
-    paymentDisclaimer.textContent =
-      "This order is matched against the wallet address and exact converted amount shown on this page. Do not send below or above the required amount, or the transaction may be ignored during review.";
-  }
-
-  async function loadLiveRates() {
-    converterStatus = "loading";
-    renderConverter();
-
-    try {
-      liveRates = await fetchUsdCryptoRates();
-      converterStatus = "ready";
-      converterSnapshot = `loaded ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
-    } catch (error) {
-      liveRates = null;
-      converterStatus = "error";
-      converterSnapshot = "";
-    }
-
-    renderConverter();
-  }
-
   function renderSelectedMethod() {
     paymentMethodButtons.forEach((button) => {
       const isSelected = button.getAttribute("data-method") === selectedMethod;
@@ -1614,7 +1519,6 @@ function renderPaymentPage() {
       paymentDetailCard.innerHTML = `<p class="order-note">Choose BTC, ETH, or USDT to reveal the payment instructions and wallet address. Cash App is currently unavailable.</p>`;
       copyPaymentAddress.hidden = true;
       paymentSentButton.hidden = true;
-      renderConverter();
       return;
     }
 
@@ -1634,7 +1538,6 @@ function renderPaymentPage() {
     copyPaymentAddress.hidden = false;
     paymentSentButton.hidden = false;
     copyPaymentAddress.textContent = `Copy ${method.copyLabel}`;
-    renderConverter();
   }
 
   paymentMethodButtons.forEach((button) => {
@@ -1669,7 +1572,6 @@ function renderPaymentPage() {
 
   syncPaymentUrl();
   renderSelectedMethod();
-  loadLiveRates();
 }
 
 function renderConfirmationPage() {

@@ -126,14 +126,8 @@
           </div>
 
           <p class="field-help payment-disclaimer" id="paymentDisclaimer">
-            This order is matched against the wallet address and exact converted amount shown on this page. Do not send below or above the required amount, or the transaction may be ignored during review.
+            This order is matched against the wallet address and the exact amount intended for this payment. Do not send below or above the amount you confirm in your wallet, or the transaction may be ignored during review.
           </p>
-
-          <div class="payment-detail-card payment-converter-card" id="paymentConverterCard">
-            <span class="payment-address-label">Exact amount to send</span>
-            <strong class="payment-converter-value" id="paymentConvertedAmount">Choose BTC, ETH, or USDT</strong>
-            <p class="order-note" id="paymentConverterMeta">Select a crypto method to load the live converted amount for this order.</p>
-          </div>
 
           <div class="payment-actions">
             <button class="button" id="copyPaymentAddress" type="button" hidden>Copy wallet address</button>
@@ -151,7 +145,7 @@
         <ul class="help-list">
           <li>The payment view keeps the same event, listing, quantity, and order total from checkout.</li>
           <li>BTC, ETH, and USDT can reveal their wallet details here, while Cash App stays visible as unavailable.</li>
-          <li>Send only the exact converted amount shown on this page, then mark payment as sent to move into transaction review.</li>
+          <li>Confirm the exact amount in your wallet before sending, then mark payment as sent to move into transaction review.</li>
         </ul>
       </section>
     </main>
