@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morgan Wallen Tickets | Checkout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="specialized.css" />
+  <script src="site.js" defer></script>
+</head>
+<body data-page="checkout">
+  <div class="site-shell">
+    <header class="topbar">
+      <a class="brand" href="index.html#home" aria-label="Morgan Wallen home">
+        <span>Morgan</span>
+        <span>Wallen</span>
+      </a>
+
+      <nav aria-label="Primary">
+        <ul class="nav-links">
+          <li><a href="index.html#tour">Tour</a></li>
+          <li><a href="tickets.html">Tickets</a></li>
+          <li><a href="index.html#music">Music</a></li>
+          <li><a href="index.html#store">Store</a></li>
+          <li><a href="index.html#signup">Sign Up</a></li>
+        </ul>
+      </nav>
+
+      <div class="socials" aria-label="Quick links">
+        <a class="social-link" href="tickets.html" aria-label="Ticket hub">hub</a>
+        <a class="social-link" href="https://shop.morganwallen.com/" target="_blank" rel="noreferrer" aria-label="Official store">shop</a>
+        <a class="social-link" href="https://morganwallen.com/" target="_blank" rel="noreferrer" aria-label="Official site">web</a>
+      </div>
+    </header>
+
+    <main class="checkout-page">
+      <noscript class="no-script">Enable JavaScript to load the selected event and submit the checkout form.</noscript>
+
+      <section class="checkout-hero">
+        <a class="back-link" id="checkoutBackLink" href="tickets.html">Back to ticket listings</a>
+        <p class="eyebrow">Checkout</p>
+        <h1>Review your order and stage the purchase flow.</h1>
+        <p>
+          This page completes the front-end journey with attendee details, delivery context, order totals, and a locally handled confirmation state.
+        </p>
+      </section>
+
+      <section class="checkout-layout">
+        <article class="checkout-panel">
+          <p class="eyebrow">Order Review</p>
+          <h2 id="checkoutEventTitle">Loading event...</h2>
+          <p class="checkout-meta" id="checkoutEventMeta"></p>
+
+          <div class="checkout-ticket-card" id="checkoutTicketCard"></div>
+
+          <div class="checkout-line">
+            <span>Ticket subtotal</span>
+            <strong id="checkoutSubtotal">$0</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Estimated fees</span>
+            <strong id="checkoutFees">$0</strong>
+          </div>
+
+          <div class="checkout-line">
+            <span>Delivery</span>
+            <strong id="checkoutDeliveryValue">Mobile transfer</strong>
+          </div>
+
+          <div class="checkout-total">
+            <span>Total due today</span>
+            <strong id="checkoutTotal">$0</strong>
+          </div>
+
+          <p class="field-help">
+            This checkout currently completes in-browser, and the review flow stays synced to the selected listing and quantity.
+          </p>
+        </article>
+
+        <article class="checkout-panel">
+          <p class="eyebrow">Attendee Details</p>
+          <form class="checkout-form" id="checkoutForm">
+            <div class="checkout-field-grid">
+              <label class="checkout-field">
+                <span>First name</span>
+                <input type="text" name="firstName" required />
+              </label>
+
+              <label class="checkout-field">
+                <span>Last name</span>
+                <input type="text" name="lastName" required />
+              </label>
+            </div>
+
+            <div class="checkout-field-grid">
+              <label class="checkout-field">
+                <span>Email</span>
+                <input type="email" name="email" required />
+              </label>
+
+              <label class="checkout-field">
+                <span>Phone</span>
+                <input type="tel" name="phone" placeholder="(555) 555-5555" required />
+              </label>
+            </div>
+
+            <div class="checkout-field-grid">
+              <label class="checkout-field">
+                <span>Payment method</span>
+                <select name="paymentMethod" required>
+                  <option value="">Choose one</option>
+                  <option value="card">Card</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="apple-pay">Apple Pay</option>
+                </select>
+              </label>
+
+              <label class="checkout-field">
+                <span>Billing zip</span>
+                <input type="text" name="zip" maxlength="10" required />
+              </label>
+            </div>
+
+            <label class="checkout-field">
+              <span>Delivery note</span>
+              <textarea name="note" placeholder="Optional note for transfer timing, companion tickets, or accessibility needs"></textarea>
+            </label>
+
+            <label class="checkbox-row">
+              <input type="checkbox" name="terms" required />
+              <span>I understand this checkout is handled in-browser and agree to the displayed marketplace-style pricing and ticket protection notes.</span>
+            </label>
+
+            <button class="checkout-submit" type="submit">Place Order</button>
+          </form>
+
+          <p class="form-message" id="checkoutMessage" aria-live="polite"></p>
+        </article>
+      </section>
+
+      <section class="help-panel">
+        <p class="eyebrow">Protection Notes</p>
+        <h2>What this checkout covers</h2>
+
+        <ul class="help-list">
+          <li>Event-specific totals generated from the chosen listing and quantity.</li>
+          <li>Delivery method pulled from the inventory card you selected in the ticket hub.</li>
+          <li>Marketplace-style expectation of valid entry, timely delivery, and refund or replacement review.</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Checkout details are handled locally in this site and derived from the selected ticket listing. Pricing remains a March 29, 2026 marketplace snapshot.
+      </p>
+
+      <div class="footer-links">
+        <a href="tickets.html">Ticket Hub</a>
+        <a href="index.html#tour">Tour</a>
+        <a href="https://morganwallen.com/" target="_blank" rel="noreferrer">Official Site</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

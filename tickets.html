@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morgan Wallen Tickets | Ticket Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="specialized.css" />
+  <script src="site.js" defer></script>
+</head>
+<body data-page="tickets">
+  <div class="site-shell">
+    <header class="topbar">
+      <a class="brand" href="index.html#home" aria-label="Morgan Wallen home">
+        <span>Morgan</span>
+        <span>Wallen</span>
+      </a>
+
+      <nav aria-label="Primary">
+        <ul class="nav-links">
+          <li><a href="index.html#tour">Tour</a></li>
+          <li><a href="index.html#videos">Videos</a></li>
+          <li><a href="index.html#music">Music</a></li>
+          <li><a href="index.html#store">Store</a></li>
+          <li><a href="index.html#signup">Sign Up</a></li>
+          <li><a href="tickets.html">Tickets</a></li>
+        </ul>
+      </nav>
+
+      <div class="socials" aria-label="Quick links">
+        <a class="social-link" href="https://morganwallen.com/tour/" target="_blank" rel="noreferrer" aria-label="Official tour">tour</a>
+        <a class="social-link" href="https://shop.morganwallen.com/" target="_blank" rel="noreferrer" aria-label="Official store">shop</a>
+        <a class="social-link" href="checkout.html" aria-label="Checkout">cart</a>
+      </div>
+    </header>
+
+    <main class="ticket-page">
+      <noscript class="no-script">Enable JavaScript to switch events, filter listings, and continue into checkout.</noscript>
+
+      <section class="ticket-hero">
+        <a class="back-link" href="index.html#tour">Back to featured tour dates</a>
+        <div class="ticket-hero-grid">
+          <div>
+            <p class="eyebrow">Marketplace Ticket Hub</p>
+            <h1 id="ticketEventTitle">Loading event...</h1>
+            <p class="ticket-meta" id="ticketEventMeta"></p>
+            <div class="ticket-chip-row" id="ticketHeroChips"></div>
+          </div>
+
+          <aside class="ticket-hero-note">
+            <p class="eyebrow">Built Like A Real Listing Page</p>
+            <p class="market-caption">
+              Filters, delivery types, all-in pricing, protection notes, and checkout review were modeled after current resale marketplace patterns.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="filter-bar" id="ticketFilters" aria-label="Ticket filters">
+        <label class="filter-field">
+          <span>Event</span>
+          <select id="eventSelect"></select>
+        </label>
+
+        <label class="filter-field">
+          <span>Quantity</span>
+          <select id="quantitySelect">
+            <option value="1">1 ticket</option>
+            <option value="2" selected>2 tickets</option>
+            <option value="3">3 tickets</option>
+            <option value="4">4 tickets</option>
+            <option value="5">5 tickets</option>
+            <option value="6">6 tickets</option>
+          </select>
+        </label>
+
+        <label class="filter-field">
+          <span>Delivery</span>
+          <select id="deliverySelect">
+            <option value="all">All delivery</option>
+            <option value="Mobile transfer">Mobile transfer</option>
+            <option value="Instant download">Instant download</option>
+          </select>
+        </label>
+
+        <label class="filter-field">
+          <span>Sort</span>
+          <select id="sortSelect">
+            <option value="recommended">Recommended</option>
+            <option value="lowest">Lowest price</option>
+            <option value="highest">Highest price</option>
+            <option value="closest">Closest to stage</option>
+          </select>
+        </label>
+
+        <label class="filter-field">
+          <span>Search</span>
+          <input id="listingSearch" type="search" placeholder="Section, zone, note" />
+        </label>
+
+        <label class="filter-field">
+          <span id="priceRangeLabel">Max price per ticket</span>
+          <input id="priceRange" type="range" />
+        </label>
+      </section>
+
+      <section class="ticket-layout">
+        <div class="ticket-main-column">
+          <section class="market-grid" id="marketGrid" aria-label="Market stats"></section>
+
+          <section class="zone-stage">
+            <div class="seat-map" aria-hidden="true">
+              <div class="seat-ring ring-upper"></div>
+              <div class="seat-ring ring-lower"></div>
+              <div class="seat-ring ring-club"></div>
+              <div class="seat-core"></div>
+              <div class="seat-stage">Stage</div>
+            </div>
+
+            <div class="zone-list" id="zoneList" aria-label="Seat zones"></div>
+          </section>
+
+          <section class="listings-stage">
+            <div class="listings-head">
+              <h2>Available Listings</h2>
+              <p class="ticket-toolbar-note" id="resultsCount"></p>
+            </div>
+
+            <div class="listing-grid" id="listingGrid"></div>
+          </section>
+
+          <section class="faq-stage">
+            <h2>Before You Checkout</h2>
+
+            <details open>
+              <summary>Why do prices move so much?</summary>
+              <p class="faq-answer">
+                Marketplace sellers set their own prices, so high-demand dates and lower inventory can push listings well above face value.
+              </p>
+            </details>
+
+            <details>
+              <summary>What delivery types are supported here?</summary>
+              <p class="faq-answer">
+                This build supports mobile transfer and instant download styles, matching the most common delivery paths shown on resale marketplaces.
+              </p>
+            </details>
+
+            <details>
+              <summary>What happens if there is a ticket problem?</summary>
+              <p class="faq-answer">
+                The protection copy on this page mirrors the standard marketplace pattern: valid-entry expectation, on-time delivery, and comparable replacement
+                or refund review if something goes wrong.
+              </p>
+            </details>
+          </section>
+        </div>
+
+        <aside class="summary-card" id="summaryCard">
+          <p class="eyebrow">Order Summary</p>
+          <h2 id="summaryEventTitle">Choose a listing</h2>
+
+          <div class="summary-ticket" id="summaryTicket"></div>
+
+          <div class="summary-line">
+            <span>Selected quantity</span>
+            <strong id="summaryQuantity">2 tickets</strong>
+          </div>
+
+          <div class="summary-line">
+            <span>Ticket subtotal</span>
+            <strong id="summarySubtotal">$0</strong>
+          </div>
+
+          <div class="summary-line">
+            <span>Estimated fees</span>
+            <strong id="summaryFees">$0</strong>
+          </div>
+
+          <div class="summary-total">
+            <span>Estimated order total</span>
+            <strong id="summaryTotal">$0</strong>
+          </div>
+
+          <a class="button summary-checkout" id="checkoutLink" href="checkout.html">Continue to Checkout</a>
+
+          <ul class="summary-protection">
+            <li>Delivery path shown before checkout</li>
+            <li>Comparable replacement or refund review if an issue is reported</li>
+            <li>Snapshot pricing reflects March 29, 2026 public listings</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Related Dates</p>
+            <h2>Keep Shopping The Tour</h2>
+          </div>
+          <p>Jump between other featured stadium stops without leaving the ticket hub.</p>
+        </div>
+
+        <div class="related-grid" id="relatedGrid"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Ticket hub interactions are local to this project. Prices, averages, and availability are sample marketplace snapshots assembled on March 29, 2026.
+      </p>
+
+      <div class="footer-links">
+        <a href="index.html#tour">Back to Tour</a>
+        <a href="checkout.html">Checkout</a>
+        <a href="https://morganwallen.com/tour/" target="_blank" rel="noreferrer">Official Tour</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
