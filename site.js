@@ -327,8 +327,7 @@ const siteData = {
 const checkoutStorageKey = "morganWallenCheckout";
 const sitewideDiscountRate = 0.1;
 const paymentData = {
-  btcAddress: "bc1paup02nxr2hfplcfyzpcwnulgjh7uz38lsedr9juwln9lh04vlepqc8ujp3",
-  ethAddress: "0x1f1E3dbc1AE4f5DBa2E90afe590355B9E4B9F2Ce",
+  btcAddress: "bc1qzcek3xtup9p9mcydlnxpl93k57ze27fvz2cegd",
   usdtAddress: "0x563bca3e7712E31A17e7Db7F5E4b3762614236e5"
 };
 
@@ -490,20 +489,6 @@ function getPaymentMethods(totalDue) {
       instructions: [
         `Order total for this order: ${formatCurrency(totalDue)}.`,
         "Send your BTC payment to the wallet address shown below.",
-        "Review the destination address carefully before you confirm the transfer."
-      ]
-    },
-    eth: {
-      label: "ETH",
-      badge: "ETH",
-      title: "Ethereum wallet transfer",
-      description: "Use any ETH wallet to send your payment for this order to the wallet address below.",
-      addressLabel: "ETH wallet address",
-      address: paymentData.ethAddress,
-      copyLabel: "ETH wallet address",
-      instructions: [
-        `Order total for this order: ${formatCurrency(totalDue)}.`,
-        "Send your ETH payment to the wallet address shown below.",
         "Review the destination address carefully before you confirm the transfer."
       ]
     },
@@ -1516,7 +1501,7 @@ function renderPaymentPage() {
     });
 
     if (!selectedMethod) {
-      paymentDetailCard.innerHTML = `<p class="order-note">Choose BTC, ETH, or USDT to reveal the payment instructions and wallet address. Cash App is currently unavailable.</p>`;
+      paymentDetailCard.innerHTML = `<p class="order-note">Choose BTC or USDT to reveal the payment instructions and wallet address. Cash App is currently unavailable.</p>`;
       copyPaymentAddress.hidden = true;
       paymentSentButton.hidden = true;
       return;
@@ -1636,11 +1621,11 @@ function renderConfirmationPage() {
   } else {
     confirmationMethodBadge.textContent = "Pending";
     confirmationStatusTitle.textContent = "Awaiting payment method";
-    confirmationStatusCopy.textContent = "This confirmation view does not have a payment method attached. Return to the payment page and choose BTC, ETH, or USDT to continue.";
+    confirmationStatusCopy.textContent = "This confirmation view does not have a payment method attached. Return to the payment page and choose BTC or USDT to continue.";
     confirmationStatusValue.textContent = "Pending selection";
     confirmationMethodValue.textContent = "Not selected";
     confirmationWalletLabel.textContent = "Payment address";
-    confirmationWalletValue.textContent = "Return to the payment page to choose BTC, ETH, or USDT.";
+    confirmationWalletValue.textContent = "Return to the payment page to choose BTC or USDT.";
   }
 }
 
