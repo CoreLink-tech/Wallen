@@ -350,6 +350,10 @@ function applySitewideDiscount(value) {
   return value * (1 - sitewideDiscountRate);
 }
 
+function getRoundedDiscountedAmount(value) {
+  return Math.round(applySitewideDiscount(value));
+}
+
 function formatFixedCurrency(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -359,43 +363,50 @@ function formatFixedCurrency(value) {
   }).format(value);
 }
 
-function discountPriceText(text) {
-  return text.replace(/\$([0-9]+(?:\.[0-9]{1,2})?)/g, (match, amount) => {
-    const discountedAmount = applySitewideDiscount(Number.parseFloat(amount));
-    return formatFixedCurrency(discountedAmount);
+function buildDiscountPriceMarkup(originalValue, options = {}) {
+  if (!originalValue) {
+    return options.fixed ? formatFixedCurrency(0) : formatCurrency(0);
+  }
+
+  const fixed = options.fixed ?? !Number.isInteger(originalValue);
+  const discountedValue = options.discountedValue ?? (fixed ? applySitewideDiscount(originalValue) : getRoundedDiscountedAmount(originalValue));
+  const originalFormatted = fixed ? formatFixedCurrency(originalValue) : formatCurrency(originalValue);
+  const discountedFormatted = fixed ? formatFixedCurrency(discountedValue) : formatCurrency(discountedValue);
+
+  return `
+    <span class="price-comparison">
+      <s class="price-original">${originalFormatted}</s>
+      <span class="price-discount-copy">Discount price ${discountedFormatted}</span>
+    </span>
+  `.trim();
+}
+
+function decoratePriceText(text) {
+  return text.replace(/\$([0-9][0-9,]*(?:\.[0-9]{1,2})?)/g, (match, amount) => {
+    const originalValue = Number.parseFloat(amount.replace(/,/g, ""));
+    return buildDiscountPriceMarkup(originalValue, { fixed: amount.includes(".") });
   });
 }
 
-function applySitewideDiscounts() {
-  if (siteData.discountApplied) {
-    return;
-  }
-
-  siteData.events = siteData.events.map((event) => ({
-    ...event,
-    priceFrom: Math.round(applySitewideDiscount(event.priceFrom)),
-    averagePrice: Math.round(applySitewideDiscount(event.averagePrice))
-  }));
-
-  siteData.music = siteData.music.map((item) => ({
-    ...item,
-    kicker: discountPriceText(item.kicker),
-    meta: discountPriceText(item.meta)
-  }));
-
-  siteData.merch = siteData.merch.map((item) => ({
-    ...item,
-    kicker: discountPriceText(item.kicker),
-    meta: discountPriceText(item.meta)
-  }));
-
-  siteData.discountApplied = true;
-}
-
-applySitewideDiscounts();
-
 function buildTicketUrl(eventId) {
   return `tickets.html?event=${encodeURIComponent(eventId)}`;
+}
+
+function buildListingsUrl(eventId, quantity = 2, zone = "", listingId = "") {
+  const params = new URLSearchParams({
+    event: eventId,
+    qty: String(quantity)
+  });
+
+  if (zone && zone !== "all") {
+    params.set("zone", zone);
+  }
+
+  if (listingId) {
+    params.set("listing", listingId);
+  }
+
+  return `listings.html?${params.toString()}`;
 }
 
 function buildCheckoutUrl(eventId, listingId, quantity) {
@@ -430,16 +441,22 @@ function getOrderContext(params) {
   const listing = listings.find((item) => item.id === params.get("listing")) || listings[0];
   const requestedQuantity = Number.parseInt(params.get("qty"), 10) || 2;
   const quantity = listing.quantities.includes(requestedQuantity) ? requestedQuantity : listing.quantities[0];
+  const originalSubtotal = listing.originalPrice * quantity;
   const subtotal = listing.price * quantity;
+  const originalFees = listing.originalFees * quantity;
   const fees = listing.fees * quantity;
+  const originalTotal = originalSubtotal + originalFees;
   const total = subtotal + fees;
 
   return {
     currentEvent,
     listing,
     quantity,
+    originalSubtotal,
     subtotal,
+    originalFees,
     fees,
+    originalTotal,
     total
   };
 }
@@ -481,31 +498,36 @@ function buildZones(event) {
     {
       label: "Upper Bowl",
       description: "Lowest market entry with full-stage sightlines.",
-      price: roundToNearestFive(event.priceFrom),
+      originalPrice: roundToNearestFive(event.priceFrom),
+      price: getRoundedDiscountedAmount(roundToNearestFive(event.priceFrom)),
       urgency: "Best budget lane"
     },
     {
       label: "Lower Bowl",
       description: "Balanced angle and atmosphere for most buyers.",
-      price: roundToNearestFive(event.averagePrice * 0.82),
+      originalPrice: roundToNearestFive(event.averagePrice * 0.82),
+      price: getRoundedDiscountedAmount(roundToNearestFive(event.averagePrice * 0.82)),
       urgency: "Popular value tier"
     },
     {
       label: "Club Level",
       description: "Premium concourse access and shorter lines.",
-      price: roundToNearestFive(event.averagePrice * 0.98),
+      originalPrice: roundToNearestFive(event.averagePrice * 0.98),
+      price: getRoundedDiscountedAmount(roundToNearestFive(event.averagePrice * 0.98)),
       urgency: "Comfort upgrade"
     },
     {
       label: "Floor",
       description: "Reserved floor rows with the strongest stage proximity.",
-      price: roundToNearestFive(event.averagePrice * 1.2),
+      originalPrice: roundToNearestFive(event.averagePrice * 1.2),
+      price: getRoundedDiscountedAmount(roundToNearestFive(event.averagePrice * 1.2)),
       urgency: "Stage-facing demand"
     },
     {
       label: "VIP / Pit",
       description: "Highest-demand access close to the barricade.",
-      price: roundToNearestFive(event.averagePrice * 1.48),
+      originalPrice: roundToNearestFive(event.averagePrice * 1.48),
+      price: getRoundedDiscountedAmount(roundToNearestFive(event.averagePrice * 1.48)),
       urgency: "Fastest-moving premium"
     }
   ];
@@ -518,7 +540,7 @@ function buildListings(event) {
       zone: zones[0].label,
       section: "Upper 338",
       row: "14",
-      price: zones[0].price,
+      originalPrice: zones[0].originalPrice,
       quantities: [2, 4],
       delivery: "Instant download",
       flag: "Lowest price",
@@ -529,7 +551,7 @@ function buildListings(event) {
       zone: zones[0].label,
       section: "Upper 315",
       row: "8",
-      price: roundToNearestFive(zones[0].price + 22),
+      originalPrice: roundToNearestFive(zones[0].originalPrice + 22),
       quantities: [1, 2, 3, 4],
       delivery: "Mobile transfer",
       flag: "Fast transfer",
@@ -540,7 +562,7 @@ function buildListings(event) {
       zone: zones[1].label,
       section: "Lower 124",
       row: "18",
-      price: zones[1].price,
+      originalPrice: zones[1].originalPrice,
       quantities: [2, 4],
       delivery: "Mobile transfer",
       flag: "Best value",
@@ -551,7 +573,7 @@ function buildListings(event) {
       zone: zones[2].label,
       section: "Club 216",
       row: "6",
-      price: zones[2].price,
+      originalPrice: zones[2].originalPrice,
       quantities: [2, 4, 6],
       delivery: "Instant download",
       flag: "Premium comfort",
@@ -562,7 +584,7 @@ function buildListings(event) {
       zone: zones[3].label,
       section: "Floor B3",
       row: "11",
-      price: zones[3].price,
+      originalPrice: zones[3].originalPrice,
       quantities: [2, 4],
       delivery: "Mobile transfer",
       flag: "Closer to stage",
@@ -573,7 +595,7 @@ function buildListings(event) {
       zone: zones[4].label,
       section: "Pit GA",
       row: "GA",
-      price: zones[4].price,
+      originalPrice: zones[4].originalPrice,
       quantities: [1, 2],
       delivery: "Mobile transfer",
       flag: "Highest demand",
@@ -584,8 +606,10 @@ function buildListings(event) {
 
   return templates.map((template, index) => ({
     ...template,
+    price: getRoundedDiscountedAmount(template.originalPrice),
     id: `${event.id}-listing-${index + 1}`,
-    fees: roundToNearestFive(template.price * 0.22),
+    originalFees: roundToNearestFive(template.originalPrice * 0.22),
+    fees: getRoundedDiscountedAmount(roundToNearestFive(template.originalPrice * 0.22)),
     rating: 4.7 + (index % 3) * 0.1
   }));
 }
@@ -610,9 +634,9 @@ function renderHeroStats() {
 
   const items = [
     { value: `${siteData.events.length}`, label: "featured event pages" },
-    { value: formatCurrency(cheapest.priceFrom), label: "lowest current entry price" },
+    { value: buildDiscountPriceMarkup(cheapest.priceFrom), label: "lowest current entry price" },
     { value: formatNumber(totalTickets), label: "tickets across featured dates" },
-    { value: formatCurrency(averageFloor), label: "average market midpoint" }
+    { value: buildDiscountPriceMarkup(averageFloor), label: "average market midpoint" }
   ];
 
   heroStats.innerHTML = items
@@ -662,7 +686,7 @@ function renderTourRows() {
               <span>${event.venue}</span>
             </div>
             <p class="tour-support">${event.support.join(", ")}</p>
-            <p class="tour-market">From ${formatCurrency(event.priceFrom)} | Avg ${formatCurrency(event.averagePrice)} | ${formatNumber(event.availableTickets)} tickets</p>
+            <p class="tour-market">${decoratePriceText(`From ${formatCurrency(event.priceFrom)} | Avg ${formatCurrency(event.averagePrice)} | ${formatNumber(event.availableTickets)} tickets`)}</p>
           </div>
 
           <div class="tour-city">
@@ -673,7 +697,7 @@ function renderTourRows() {
           <div class="tour-ticket">
             <a class="ticket-link" href="${buildTicketUrl(event.id)}">
               <span>Tickets</span>
-              <small>From ${formatCurrency(event.priceFrom)}</small>
+              <small>${decoratePriceText(`From ${formatCurrency(event.priceFrom)}`)}</small>
             </a>
           </div>
         </article>
@@ -698,10 +722,10 @@ function renderCardGrid(containerId, items) {
     .map(
       (item) => `
         <article class="${cardClass}">
-          <span class="card-kicker">${item.kicker}</span>
+          <span class="card-kicker">${decoratePriceText(item.kicker)}</span>
           <h3>${item.title}</h3>
           <p class="card-copy">${item.description}</p>
-          <p class="card-meta">${item.meta}</p>
+          <p class="card-meta">${decoratePriceText(item.meta)}</p>
           ${createCardAction(item)}
         </article>
       `
@@ -773,13 +797,204 @@ function buildSummaryTicketMarkup(event, listing) {
   `;
 }
 
-function renderTicketPage() {
+function renderTicketOverviewPage() {
   const eventTitle = document.getElementById("ticketEventTitle");
   if (!eventTitle) {
     return;
   }
 
   const params = new URLSearchParams(window.location.search);
+  const eventSelect = document.getElementById("eventSelect");
+  const quantitySelect = document.getElementById("quantitySelect");
+  const marketGrid = document.getElementById("marketGrid");
+  const zoneList = document.getElementById("zoneList");
+  const ticketMeta = document.getElementById("ticketEventMeta");
+  const ticketHeroChips = document.getElementById("ticketHeroChips");
+  const relatedGrid = document.getElementById("relatedGrid");
+  const overviewSummaryTitle = document.getElementById("overviewSummaryTitle");
+  const overviewSummaryCard = document.getElementById("overviewSummaryCard");
+  const overviewPriceFrom = document.getElementById("overviewPriceFrom");
+  const overviewAveragePrice = document.getElementById("overviewAveragePrice");
+  const overviewTicketsAvailable = document.getElementById("overviewTicketsAvailable");
+  const overviewTicketsAvailableSidebar = document.getElementById("overviewTicketsAvailableSidebar");
+  const overviewSelectedQuantity = document.getElementById("overviewSelectedQuantity");
+  const overviewSelectedZone = document.getElementById("overviewSelectedZone");
+  const overviewSelectedZoneInline = document.getElementById("overviewSelectedZoneInline");
+  const overviewListingsLink = document.getElementById("overviewListingsLink");
+  const overviewSidebarLink = document.getElementById("overviewSidebarLink");
+  const overviewListingsTopLink = document.getElementById("overviewListingsTopLink");
+  const overviewLaunchNote = document.getElementById("overviewLaunchNote");
+
+  let currentEvent = getEventById(params.get("event"));
+  let selectedQuantity = Number.parseInt(params.get("qty"), 10) || Number.parseInt(quantitySelect.value, 10) || 2;
+  let activeZone = params.get("zone") || "all";
+
+  function syncUrl() {
+    const nextParams = new URLSearchParams();
+    nextParams.set("event", currentEvent.id);
+    nextParams.set("qty", String(selectedQuantity));
+    if (activeZone !== "all") {
+      nextParams.set("zone", activeZone);
+    }
+    const nextUrl = `${window.location.pathname.split("/").pop()}?${nextParams.toString()}`;
+    window.history.replaceState({}, "", nextUrl);
+  }
+
+  function getMatchingListings() {
+    return buildListings(currentEvent).filter((listing) => {
+      const matchesQuantity = listing.quantities.includes(selectedQuantity);
+      const matchesZone = activeZone === "all" || listing.zone === activeZone;
+      return matchesQuantity && matchesZone;
+    });
+  }
+
+  function updateHero() {
+    document.title = `${currentEvent.city} Tickets | Morgan Wallen`;
+    eventTitle.textContent = `${currentEvent.city} | ${currentEvent.venue}`;
+    ticketMeta.textContent = `${currentEvent.dateLabel} | ${currentEvent.weekday} | ${currentEvent.time} | ${currentEvent.support.join(", ")}. Review the halls below, then open the separate listings page.`;
+    ticketHeroChips.innerHTML = [
+      `${buildDiscountPriceMarkup(currentEvent.priceFrom)} lowest entry`,
+      `${buildDiscountPriceMarkup(currentEvent.averagePrice)} average market price`,
+      `${formatNumber(currentEvent.availableTickets)} tickets available`,
+      `${currentEvent.capacity.toLocaleString("en-US")} venue capacity`
+    ]
+      .map((chip) => `<span class="ticket-chip">${chip}</span>`)
+      .join("");
+  }
+
+  function updateMarketStats() {
+    marketGrid.innerHTML = [
+      { value: buildDiscountPriceMarkup(currentEvent.priceFrom), label: "Lowest ticket price" },
+      { value: buildDiscountPriceMarkup(currentEvent.averagePrice), label: "Average market price" },
+      { value: formatNumber(currentEvent.availableTickets), label: "Current tickets listed" },
+      { value: currentEvent.deliveryTypes.join(" / "), label: "Delivery methods" }
+    ]
+      .map(
+        (item) => `
+          <article class="market-card">
+            <strong>${item.value}</strong>
+            <span>${item.label}</span>
+          </article>
+        `
+      )
+      .join("");
+  }
+
+  function updateLaunchLinks() {
+    const matchingListings = getMatchingListings();
+    const zoneLabel = activeZone === "all" ? "All halls" : activeZone;
+    const listingsUrl = buildListingsUrl(currentEvent.id, selectedQuantity, activeZone);
+    const zoneCopy = activeZone === "all" ? "across every hall section" : `inside ${activeZone.toLowerCase()}`;
+
+    overviewSummaryTitle.textContent = `${currentEvent.city} | ${currentEvent.dateLabel}`;
+    overviewSummaryCard.innerHTML = `
+      <span class="summary-kicker">${activeZone === "all" ? "Venue overview" : activeZone}</span>
+      <h3>${currentEvent.venue}</h3>
+      <p class="order-note">${currentEvent.address}</p>
+      <p class="order-note">${currentEvent.support.join(", ")}</p>
+      <p class="order-note">${currentEvent.note}</p>
+    `;
+    overviewPriceFrom.innerHTML = buildDiscountPriceMarkup(currentEvent.priceFrom);
+    overviewAveragePrice.innerHTML = buildDiscountPriceMarkup(currentEvent.averagePrice);
+    overviewTicketsAvailable.textContent = `${formatNumber(currentEvent.availableTickets)} listed`;
+    overviewTicketsAvailableSidebar.textContent = `${formatNumber(currentEvent.availableTickets)} listed`;
+    overviewSelectedQuantity.textContent = `${selectedQuantity} ticket${selectedQuantity === 1 ? "" : "s"}`;
+    overviewSelectedZone.textContent = zoneLabel;
+    overviewSelectedZoneInline.textContent = zoneLabel;
+    overviewLaunchNote.textContent = `${matchingListings.length} listing${matchingListings.length === 1 ? "" : "s"} are ready to open for ${selectedQuantity} ticket${selectedQuantity === 1 ? "" : "s"} ${zoneCopy}.`;
+    overviewListingsLink.href = listingsUrl;
+    overviewSidebarLink.href = listingsUrl;
+    overviewListingsTopLink.href = listingsUrl;
+  }
+
+  function updateZones() {
+    zoneList.innerHTML = buildZones(currentEvent)
+      .map(
+        (zone) => `
+          <button class="zone-item ${activeZone === zone.label ? "is-active" : ""}" type="button" data-zone="${zone.label}" aria-pressed="${activeZone === zone.label}">
+            <div>
+              <span class="zone-label">${zone.urgency}</span>
+              <h3>${zone.label}</h3>
+              <p>${zone.description}</p>
+            </div>
+            <div class="zone-price">
+              <strong>${buildDiscountPriceMarkup(zone.originalPrice, { discountedValue: zone.price })}</strong>
+              <span>from</span>
+            </div>
+          </button>
+        `
+      )
+      .join("");
+
+    zoneList.querySelectorAll("[data-zone]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const nextZone = button.getAttribute("data-zone");
+        activeZone = activeZone === nextZone ? "all" : nextZone;
+        syncUrl();
+        updateZones();
+        updateLaunchLinks();
+      });
+    });
+  }
+
+  function updateRelated() {
+    relatedGrid.innerHTML = siteData.events
+      .filter((event) => event.id !== currentEvent.id)
+      .slice(0, 4)
+      .map(
+        (event) => `
+          <article class="related-card">
+            <span class="card-kicker">${event.dateLabel}</span>
+            <h3>${event.city}</h3>
+            <p>${event.venue}</p>
+            <p class="related-meta">${decoratePriceText(`From ${formatCurrency(event.priceFrom)} | ${formatNumber(event.availableTickets)} tickets`)}</p>
+            <a class="button-small" href="${buildTicketUrl(event.id)}">Open Event</a>
+          </article>
+        `
+      )
+      .join("");
+  }
+
+  eventSelect.innerHTML = siteData.events
+    .map(
+      (event) => `<option value="${event.id}" ${event.id === currentEvent.id ? "selected" : ""}>${event.dateLabel} | ${event.city}</option>`
+    )
+    .join("");
+  quantitySelect.value = String(selectedQuantity);
+
+  eventSelect.addEventListener("change", () => {
+    currentEvent = getEventById(eventSelect.value);
+    activeZone = "all";
+    syncUrl();
+    updateHero();
+    updateMarketStats();
+    updateZones();
+    updateLaunchLinks();
+    updateRelated();
+  });
+
+  quantitySelect.addEventListener("change", () => {
+    selectedQuantity = Number.parseInt(quantitySelect.value, 10) || 2;
+    syncUrl();
+    updateLaunchLinks();
+  });
+
+  syncUrl();
+  updateHero();
+  updateMarketStats();
+  updateZones();
+  updateLaunchLinks();
+  updateRelated();
+}
+
+function renderListingsPage() {
+  const eventTitle = document.getElementById("ticketEventTitle");
+  if (!eventTitle) {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const listingsBackLink = document.getElementById("listingsBackLink");
   const eventSelect = document.getElementById("eventSelect");
   const quantitySelect = document.getElementById("quantitySelect");
   const deliverySelect = document.getElementById("deliverySelect");
@@ -804,24 +1019,25 @@ function renderTicketPage() {
 
   let currentEvent = getEventById(params.get("event"));
   let currentListings = buildListings(currentEvent);
-  let selectedQuantity = Number.parseInt(quantitySelect.value, 10) || 2;
-  let selectedListingId = currentListings[0].id;
-  let activeZone = "all";
+  let selectedQuantity = Number.parseInt(params.get("qty"), 10) || Number.parseInt(quantitySelect.value, 10) || 2;
+  let selectedListingId = params.get("listing") || currentListings[0].id;
+  let activeZone = params.get("zone") || "all";
 
   function syncUrl() {
-    const nextParams = new URLSearchParams(window.location.search);
-    nextParams.set("event", currentEvent.id);
-    const nextUrl = `${window.location.pathname.split("/").pop()}?${nextParams.toString()}`;
+    const nextUrl = buildListingsUrl(currentEvent.id, selectedQuantity, activeZone, selectedListingId || "");
     window.history.replaceState({}, "", nextUrl);
   }
 
   function updateHero() {
-    document.title = `${currentEvent.city} Tickets | Morgan Wallen`;
+    document.title = `${currentEvent.city} Listings | Morgan Wallen`;
+    if (listingsBackLink) {
+      listingsBackLink.href = buildTicketUrl(currentEvent.id);
+    }
     eventTitle.textContent = `${currentEvent.city} | ${currentEvent.venue}`;
-    ticketMeta.textContent = `${currentEvent.dateLabel} | ${currentEvent.weekday} | ${currentEvent.time} | ${currentEvent.support.join(", ")}. Market snapshot updated ${siteData.snapshotDate}.`;
+    ticketMeta.textContent = `${currentEvent.dateLabel} | ${currentEvent.weekday} | ${currentEvent.time} | ${currentEvent.support.join(", ")}. Compare live-style order listings, then continue to checkout.`;
     ticketHeroChips.innerHTML = [
-      `${formatCurrency(currentEvent.priceFrom)} lowest entry`,
-      `${formatCurrency(currentEvent.averagePrice)} average market price`,
+      `${buildDiscountPriceMarkup(currentEvent.priceFrom)} lowest entry`,
+      `${buildDiscountPriceMarkup(currentEvent.averagePrice)} average market price`,
       `${formatNumber(currentEvent.availableTickets)} tickets available`,
       `${currentEvent.capacity.toLocaleString("en-US")} venue capacity`
     ]
@@ -831,8 +1047,8 @@ function renderTicketPage() {
 
   function updateMarketStats() {
     marketGrid.innerHTML = [
-      { value: formatCurrency(currentEvent.priceFrom), label: "Lowest ticket price" },
-      { value: formatCurrency(currentEvent.averagePrice), label: "Average market price" },
+      { value: buildDiscountPriceMarkup(currentEvent.priceFrom), label: "Lowest ticket price" },
+      { value: buildDiscountPriceMarkup(currentEvent.averagePrice), label: "Average market price" },
       { value: formatNumber(currentEvent.availableTickets), label: "Current tickets listed" },
       { value: currentEvent.deliveryTypes.join(" / "), label: "Delivery methods" }
     ]
@@ -860,7 +1076,7 @@ function renderTicketPage() {
               <p>${zone.description}</p>
             </div>
             <div class="zone-price">
-              <strong>${formatCurrency(zone.price)}</strong>
+              <strong>${buildDiscountPriceMarkup(zone.originalPrice, { discountedValue: zone.price })}</strong>
               <span>from</span>
             </div>
           </button>
@@ -873,6 +1089,7 @@ function renderTicketPage() {
       button.addEventListener("click", () => {
         const nextZone = button.getAttribute("data-zone");
         activeZone = activeZone === nextZone ? "all" : nextZone;
+        syncUrl();
         updateZones();
         renderListings();
         listingGrid.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -890,8 +1107,8 @@ function renderTicketPage() {
             <span class="card-kicker">${event.dateLabel}</span>
             <h3>${event.city}</h3>
             <p>${event.venue}</p>
-            <p class="related-meta">From ${formatCurrency(event.priceFrom)} | ${formatNumber(event.availableTickets)} tickets</p>
-            <a class="button-small" href="${buildTicketUrl(event.id)}">Open Event</a>
+            <p class="related-meta">${decoratePriceText(`From ${formatCurrency(event.priceFrom)} | ${formatNumber(event.availableTickets)} tickets`)}</p>
+            <a class="button-small" href="${buildListingsUrl(event.id, selectedQuantity)}">Open Listings</a>
           </article>
         `
       )
@@ -905,12 +1122,13 @@ function renderTicketPage() {
         const matchesQuantity = listing.quantities.includes(selectedQuantity);
         const matchesDelivery = deliverySelect.value === "all" || listing.delivery === deliverySelect.value;
         const matchesSearch = `${listing.section} ${listing.zone} ${listing.note}`.toLowerCase().includes(listingSearch.value.trim().toLowerCase());
-        const matchesPrice = listing.price <= maxPrice;
+        const matchesPrice = listing.originalPrice <= maxPrice;
         const matchesZone = activeZone === "all" || listing.zone === activeZone;
         return matchesQuantity && matchesDelivery && matchesSearch && matchesPrice && matchesZone;
       }),
       sortSelect.value
     );
+    const previousListingId = selectedListingId;
 
     if (!filtered.some((listing) => listing.id === selectedListingId)) {
       selectedListingId = filtered[0] ? filtered[0].id : "";
@@ -930,21 +1148,24 @@ function renderTicketPage() {
 
       summaryEventTitle.textContent = currentEvent.city;
       summaryTicket.innerHTML = buildSummaryTicketMarkup(currentEvent, null);
-      summarySubtotal.textContent = formatCurrency(0);
-      summaryFees.textContent = formatCurrency(0);
-      summaryTotal.textContent = formatCurrency(0);
+      summarySubtotal.innerHTML = buildDiscountPriceMarkup(0);
+      summaryFees.innerHTML = buildDiscountPriceMarkup(0);
+      summaryTotal.innerHTML = buildDiscountPriceMarkup(0);
       checkoutLink.href = buildCheckoutUrl(currentEvent.id, currentListings[0].id, selectedQuantity);
+      if (previousListingId !== selectedListingId) {
+        syncUrl();
+      }
 
       const resetButton = document.getElementById("resetFiltersButton");
       if (resetButton) {
         resetButton.addEventListener("click", () => {
-          quantitySelect.value = "2";
-          selectedQuantity = 2;
           deliverySelect.value = "all";
           sortSelect.value = "recommended";
           listingSearch.value = "";
           priceRange.value = priceRange.max;
           activeZone = "all";
+          selectedListingId = currentListings[0].id;
+          syncUrl();
           updateZones();
           renderListings();
         });
@@ -966,8 +1187,8 @@ function renderTicketPage() {
             </div>
 
             <div class="listing-price">
-              <strong>${formatCurrency(listing.price)}</strong>
-              <p class="listing-meta">+ ${formatCurrency(listing.fees)} est. fees each</p>
+              <strong>${buildDiscountPriceMarkup(listing.originalPrice, { discountedValue: listing.price })}</strong>
+              <p class="listing-meta">+ ${buildDiscountPriceMarkup(listing.originalFees, { discountedValue: listing.fees })} est. fees each</p>
               <button class="listing-button ${isSelected ? "is-selected" : ""}" type="button" data-listing-id="${listing.id}">
                 ${isSelected ? "Selected" : "Select tickets"}
               </button>
@@ -979,20 +1200,27 @@ function renderTicketPage() {
       .join("");
 
     const selectedListing = filtered.find((listing) => listing.id === selectedListingId) || filtered[0];
+    const originalSubtotal = selectedListing.originalPrice * selectedQuantity;
     const subtotal = selectedListing.price * selectedQuantity;
+    const originalFees = selectedListing.originalFees * selectedQuantity;
     const fees = selectedListing.fees * selectedQuantity;
+    const originalTotal = originalSubtotal + originalFees;
     const total = subtotal + fees;
 
     summaryEventTitle.textContent = `${currentEvent.city} | ${currentEvent.dateLabel}`;
     summaryTicket.innerHTML = buildSummaryTicketMarkup(currentEvent, selectedListing);
-    summarySubtotal.textContent = formatCurrency(subtotal);
-    summaryFees.textContent = formatCurrency(fees);
-    summaryTotal.textContent = formatCurrency(total);
+    summarySubtotal.innerHTML = buildDiscountPriceMarkup(originalSubtotal, { discountedValue: subtotal });
+    summaryFees.innerHTML = buildDiscountPriceMarkup(originalFees, { discountedValue: fees });
+    summaryTotal.innerHTML = buildDiscountPriceMarkup(originalTotal, { discountedValue: total });
     checkoutLink.href = buildCheckoutUrl(currentEvent.id, selectedListing.id, selectedQuantity);
+    if (previousListingId !== selectedListingId) {
+      syncUrl();
+    }
 
     listingGrid.querySelectorAll("[data-listing-id]").forEach((button) => {
       button.addEventListener("click", () => {
         selectedListingId = button.getAttribute("data-listing-id");
+        syncUrl();
         renderListings();
       });
     });
@@ -1000,21 +1228,23 @@ function renderTicketPage() {
 
   function refreshEvent() {
     currentListings = buildListings(currentEvent);
-    const minListingPrice = Math.min(...currentListings.map((listing) => listing.price));
-    const maxListingPrice = Math.max(...currentListings.map((listing) => listing.price));
+    const minListingPrice = Math.min(...currentListings.map((listing) => listing.originalPrice));
+    const maxListingPrice = Math.max(...currentListings.map((listing) => listing.originalPrice));
 
     priceRange.min = String(minListingPrice);
     priceRange.max = String(maxListingPrice);
     priceRange.value = String(maxListingPrice);
-    priceRangeLabel.textContent = `Max price per ticket | ${formatCurrency(maxListingPrice)}`;
-    selectedListingId = currentListings[0].id;
-    activeZone = "all";
+    priceRangeLabel.innerHTML = `Max price per ticket | ${buildDiscountPriceMarkup(maxListingPrice)}`;
+    if (!currentListings.some((listing) => listing.id === selectedListingId)) {
+      selectedListingId = currentListings[0].id;
+    }
 
     updateHero();
     updateMarketStats();
     updateZones();
     updateRelated();
     renderListings();
+    syncUrl();
   }
 
   eventSelect.innerHTML = siteData.events
@@ -1022,15 +1252,18 @@ function renderTicketPage() {
       (event) => `<option value="${event.id}" ${event.id === currentEvent.id ? "selected" : ""}>${event.dateLabel} | ${event.city}</option>`
     )
     .join("");
+  quantitySelect.value = String(selectedQuantity);
 
   eventSelect.addEventListener("change", () => {
     currentEvent = getEventById(eventSelect.value);
-    syncUrl();
+    selectedListingId = buildListings(currentEvent)[0].id;
+    activeZone = "all";
     refreshEvent();
   });
 
   quantitySelect.addEventListener("change", () => {
     selectedQuantity = Number.parseInt(quantitySelect.value, 10) || 2;
+    syncUrl();
     renderListings();
   });
 
@@ -1038,7 +1271,7 @@ function renderTicketPage() {
   sortSelect.addEventListener("change", renderListings);
   listingSearch.addEventListener("input", renderListings);
   priceRange.addEventListener("input", () => {
-    priceRangeLabel.textContent = `Max price per ticket | ${formatCurrency(Number.parseInt(priceRange.value, 10))}`;
+    priceRangeLabel.innerHTML = `Max price per ticket | ${buildDiscountPriceMarkup(Number.parseInt(priceRange.value, 10))}`;
     renderListings();
   });
 
@@ -1053,7 +1286,7 @@ function renderCheckoutPage() {
 
   const params = new URLSearchParams(window.location.search);
   const orderContext = getOrderContext(params);
-  const { currentEvent, listing, quantity, subtotal, fees, total } = orderContext;
+  const { currentEvent, listing, quantity, originalSubtotal, subtotal, originalFees, fees, originalTotal, total } = orderContext;
 
   document.title = `${currentEvent.city} Checkout | Morgan Wallen`;
 
@@ -1066,19 +1299,19 @@ function renderCheckoutPage() {
   const checkoutTotal = document.getElementById("checkoutTotal");
   const checkoutForm = document.getElementById("checkoutForm");
 
-  checkoutBackLink.href = buildTicketUrl(currentEvent.id);
+  checkoutBackLink.href = buildListingsUrl(currentEvent.id, quantity, listing.zone, listing.id);
   checkoutEventTitle.textContent = `${currentEvent.city} | ${currentEvent.dateLabel}`;
   checkoutEventMeta.textContent = `${currentEvent.venue} | ${currentEvent.support.join(", ")} | Market snapshot ${siteData.snapshotDate}`;
   checkoutTicketCard.innerHTML = `
     <span class="summary-kicker">${listing.flag}</span>
     <h3>${listing.section} | Row ${listing.row}</h3>
     <p class="order-note">${listing.zone} | ${listing.delivery}</p>
-    <p class="order-note">${quantity} ticket${quantity === 1 ? "" : "s"} selected | ${formatCurrency(listing.price)} each</p>
+    <p class="order-note">${decoratePriceText(`${quantity} ticket${quantity === 1 ? "" : "s"} selected | ${formatCurrency(listing.originalPrice)} each`)}</p>
   `;
-  checkoutSubtotal.textContent = formatCurrency(subtotal);
-  checkoutFees.textContent = formatCurrency(fees);
+  checkoutSubtotal.innerHTML = buildDiscountPriceMarkup(originalSubtotal, { discountedValue: subtotal });
+  checkoutFees.innerHTML = buildDiscountPriceMarkup(originalFees, { discountedValue: fees });
   checkoutDeliveryValue.textContent = listing.delivery;
-  checkoutTotal.textContent = formatCurrency(total);
+  checkoutTotal.innerHTML = buildDiscountPriceMarkup(originalTotal, { discountedValue: total });
 
   const savedProfile = getCheckoutProfileForOrder(orderContext);
   if (savedProfile) {
@@ -1119,7 +1352,7 @@ function renderPaymentPage() {
 
   const params = new URLSearchParams(window.location.search);
   const orderContext = getOrderContext(params);
-  const { currentEvent, listing, quantity, subtotal, fees, total } = orderContext;
+  const { currentEvent, listing, quantity, originalSubtotal, subtotal, originalFees, fees, originalTotal, total } = orderContext;
   const buyerProfile = getCheckoutProfileForOrder(orderContext);
 
   document.title = `${currentEvent.city} Payment | Morgan Wallen`;
@@ -1150,7 +1383,7 @@ function renderPaymentPage() {
       address: paymentData.btcAddress,
       copyLabel: "BTC wallet address",
       instructions: [
-        `Order total to cover: ${formatCurrency(total)}.`,
+        `Order total to cover: ${formatCurrency(originalTotal)}.`,
         "Check the live BTC equivalent in your wallet right before sending.",
         "Review the destination address carefully before you confirm the transfer."
       ]
@@ -1166,14 +1399,14 @@ function renderPaymentPage() {
     <span class="summary-kicker">${listing.flag}</span>
     <h3>${listing.section} | Row ${listing.row}</h3>
     <p class="order-note">${listing.zone} | ${listing.delivery}</p>
-    <p class="order-note">${quantity} ticket${quantity === 1 ? "" : "s"} selected | ${formatCurrency(listing.price)} each</p>
+    <p class="order-note">${decoratePriceText(`${quantity} ticket${quantity === 1 ? "" : "s"} selected | ${formatCurrency(listing.originalPrice)} each`)}</p>
   `;
   paymentBuyerName.textContent = buyerProfile ? `${buyerProfile.firstName} ${buyerProfile.lastName}`.trim() || "Buyer details saved" : "Buyer details not loaded";
   paymentBuyerEmail.textContent = buyerProfile ? buyerProfile.email || buyerProfile.phone || "Contact not provided" : "Return to checkout to save buyer details";
   paymentDeliveryValue.textContent = listing.delivery;
-  paymentSubtotal.textContent = formatCurrency(subtotal);
-  paymentFees.textContent = formatCurrency(fees);
-  paymentTotal.textContent = formatCurrency(total);
+  paymentSubtotal.innerHTML = buildDiscountPriceMarkup(originalSubtotal, { discountedValue: subtotal });
+  paymentFees.innerHTML = buildDiscountPriceMarkup(originalFees, { discountedValue: fees });
+  paymentTotal.innerHTML = buildDiscountPriceMarkup(originalTotal, { discountedValue: total });
 
   function setPaymentMessage(message, isSuccess) {
     paymentMessage.textContent = message;
@@ -1205,7 +1438,7 @@ function renderPaymentPage() {
       <h3>${method.title}</h3>
       <p class="order-note">${method.description}</p>
       <ul class="payment-instruction-list">
-        ${method.instructions.map((instruction) => `<li>${instruction}</li>`).join("")}
+        ${method.instructions.map((instruction) => `<li>${decoratePriceText(instruction)}</li>`).join("")}
       </ul>
       <div class="payment-address-block">
         <span class="payment-address-label">${method.addressLabel}</span>
@@ -1261,7 +1494,10 @@ function init() {
     renderHomePage();
   }
   if (page === "tickets") {
-    renderTicketPage();
+    renderTicketOverviewPage();
+  }
+  if (page === "listings") {
+    renderListingsPage();
   }
   if (page === "checkout") {
     renderCheckoutPage();

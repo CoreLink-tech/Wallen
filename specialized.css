@@ -111,8 +111,8 @@ textarea {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 34px;
-  padding: clamp(26px, 3vw, 42px) clamp(24px, 4vw, 58px) 48px;
+  gap: 28px;
+  padding: clamp(26px, 3vw, 42px) clamp(24px, 4vw, 58px) 44px;
 }
 
 .brand {
@@ -211,8 +211,8 @@ textarea {
 .hero-stage {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
-  gap: 28px;
-  padding: 0 clamp(24px, 4vw, 58px) 74px;
+  gap: 34px;
+  padding: 0 clamp(24px, 4vw, 58px) 88px;
 }
 
 .hero-copy,
@@ -363,9 +363,11 @@ textarea {
 .music-card,
 .merch-card,
 .ticket-hero-note,
+.browse-strip,
 .filter-bar,
 .market-card,
 .zone-stage,
+.listing-launch,
 .listings-stage,
 .listing-card,
 .summary-card,
@@ -383,7 +385,9 @@ textarea {
 .album-card,
 .stat-card,
 .ticket-hero-note,
+.browse-strip,
 .filter-bar,
+.listing-launch,
 .summary-card,
 .checkout-panel,
 .help-panel {
@@ -720,7 +724,7 @@ textarea {
 .signup-stage,
 .ticket-page,
 .checkout-page {
-  padding: 74px clamp(24px, 4vw, 58px);
+  padding: 82px clamp(24px, 4vw, 58px);
 }
 
 .dark-stage {
@@ -739,19 +743,22 @@ textarea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
   align-items: end;
-  gap: 20px;
-  margin-bottom: 28px;
+  gap: 24px;
+  margin-bottom: 34px;
 }
 
 .section-header h2,
 .listings-head h2,
 .summary-card h2,
-.checkout-panel h2 {
+.checkout-panel h2,
+.listing-launch h2,
+.zone-stage-copy h2 {
   font-size: clamp(2.6rem, 3vw, 4rem);
   line-height: 0.94;
 }
 
 .card-grid {
+  gap: 20px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -889,7 +896,28 @@ textarea {
 .ticket-page,
 .checkout-page {
   display: grid;
-  gap: 28px;
+  gap: 34px;
+}
+
+.ticket-overview-page,
+.listings-page {
+  gap: 38px;
+}
+
+.ticket-page .ticket-meta,
+.ticket-page .ticket-toolbar-note,
+.ticket-page .section-lead,
+.ticket-page .market-caption,
+.ticket-page .related-card p,
+.ticket-page .related-meta,
+.ticket-page .faq-answer,
+.ticket-page .field-help,
+.ticket-page .order-note,
+.checkout-page .checkout-meta,
+.checkout-page .field-help,
+.checkout-page .order-note,
+.checkout-page .faq-answer {
+  color: rgba(248, 235, 205, 0.76);
 }
 
 .back-link {
@@ -915,6 +943,23 @@ textarea {
 
 .ticket-hero-note {
   padding: 22px;
+}
+
+.ticket-hero-note-emphasis {
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket-hero-note-emphasis::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  bottom: -34px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(218, 155, 100, 0.22), transparent 70%);
+  pointer-events: none;
 }
 
 .ticket-chip-row,
@@ -946,8 +991,53 @@ textarea {
 .filter-bar {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+  padding: 24px;
+}
+
+.browse-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.92fr);
+  gap: 18px;
+  padding: 24px;
+}
+
+.browse-strip-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.browse-strip-panel {
+  display: grid;
   gap: 12px;
-  padding: 20px;
+  align-content: center;
+}
+
+.browse-strip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.browse-strip-tag {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 240, 205, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  font-family: "Special Elite", serif;
+  font-size: 0.88rem;
+  color: rgba(248, 235, 205, 0.76);
+  text-transform: none;
+}
+
+.browse-strip-tag strong {
+  color: var(--cream);
 }
 
 .filter-field input[type="range"] {
@@ -960,13 +1050,21 @@ textarea {
 .checkout-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 20px;
+  gap: 24px;
   align-items: start;
+}
+
+.overview-layout {
+  grid-template-columns: minmax(0, 1.06fr) 360px;
+}
+
+.listing-layout {
+  grid-template-columns: minmax(0, 1.02fr) 350px;
 }
 
 .ticket-main-column {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .market-grid {
@@ -977,7 +1075,7 @@ textarea {
 .zone-stage,
 .listings-stage,
 .faq-stage {
-  padding: 22px;
+  padding: 24px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 64%),
     rgba(255, 255, 255, 0.03);
@@ -997,7 +1095,17 @@ textarea {
 .zone-stage {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
-  gap: 20px;
+  gap: 22px;
+}
+
+.compact-zone-stage {
+  grid-template-columns: minmax(250px, 0.82fr) minmax(0, 1.18fr);
+}
+
+.zone-stage-copy {
+  display: grid;
+  align-content: start;
+  gap: 14px;
 }
 
 .seat-map {
@@ -1128,12 +1236,49 @@ textarea {
   gap: 14px;
 }
 
+.listing-launch {
+  display: grid;
+  gap: 22px;
+  padding: 28px;
+}
+
+.listing-launch-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.listing-launch-item {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.listing-launch-item span {
+  font-family: "Special Elite", serif;
+  font-size: 0.84rem;
+  color: rgba(248, 235, 205, 0.68);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.listing-launch-item strong {
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+
+.listing-launch-button {
+  width: fit-content;
+}
+
 .listing-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
-  padding: 20px;
+  padding: 22px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 66%),
     rgba(255, 255, 255, 0.03);
@@ -1161,6 +1306,9 @@ textarea {
 }
 
 .listing-price {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
   text-align: right;
 }
 
@@ -1187,8 +1335,12 @@ textarea {
   position: sticky;
   top: 20px;
   display: grid;
-  gap: 16px;
-  padding: 22px;
+  gap: 18px;
+  padding: 24px;
+}
+
+.overview-summary-card {
+  top: 28px;
 }
 
 .summary-ticket,
@@ -1272,7 +1424,15 @@ textarea {
 }
 
 .checkout-panel {
-  padding: 24px;
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+}
+
+.help-panel {
+  display: grid;
+  gap: 16px;
+  padding: 28px;
 }
 
 .checkout-form {
@@ -1285,7 +1445,7 @@ textarea {
 .checkout-field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
 .checkout-form textarea {
@@ -1319,6 +1479,90 @@ textarea {
 
 .field-help {
   color: rgba(248, 235, 205, 0.6);
+}
+
+.price-comparison {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.price-original {
+  color: rgba(248, 235, 205, 0.48);
+  text-decoration-thickness: 2px;
+}
+
+.price-discount-copy {
+  color: var(--accent-strong);
+  font-weight: 700;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.listing-price strong,
+.summary-line strong,
+.summary-total strong,
+.checkout-line strong,
+.checkout-total strong,
+.stat-card strong,
+.market-card strong,
+.zone-price strong {
+  display: block;
+}
+
+.listing-price .price-comparison,
+.summary-line .price-comparison,
+.summary-total .price-comparison,
+.checkout-line .price-comparison,
+.checkout-total .price-comparison,
+.zone-price .price-comparison {
+  justify-content: flex-end;
+}
+
+.listing-price .price-comparison,
+.summary-line .price-comparison,
+.summary-total .price-comparison,
+.checkout-line .price-comparison,
+.checkout-total .price-comparison,
+.zone-price .price-comparison,
+.stat-card .price-comparison,
+.market-card .price-comparison {
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.listing-price .price-original,
+.summary-line .price-original,
+.summary-total .price-original,
+.checkout-line .price-original,
+.checkout-total .price-original,
+.zone-price .price-original,
+.stat-card .price-original,
+.market-card .price-original {
+  font-size: 0.68em;
+}
+
+.listing-price .price-discount-copy,
+.summary-line .price-discount-copy,
+.summary-total .price-discount-copy,
+.checkout-line .price-discount-copy,
+.checkout-total .price-discount-copy,
+.zone-price .price-discount-copy,
+.stat-card .price-discount-copy,
+.market-card .price-discount-copy {
+  font-size: 0.62em;
+}
+
+.ticket-chip .price-comparison,
+.tour-market .price-comparison,
+.ticket-link small .price-comparison,
+.related-meta .price-comparison,
+.listing-meta .price-comparison,
+.order-note .price-comparison,
+.card-kicker .price-comparison,
+.card-meta .price-comparison {
+  gap: 4px 8px;
 }
 
 .payment-method-grid {
@@ -1445,10 +1689,11 @@ textarea {
 
 .site-footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 24px clamp(24px, 4vw, 58px) 34px;
+  padding: 28px clamp(24px, 4vw, 58px) 36px;
 }
 
 .footer-links a {
@@ -1474,6 +1719,7 @@ textarea {
   .hero-stage,
   .section-header,
   .signup-stage,
+  .browse-strip,
   .ticket-hero-grid,
   .ticket-layout,
   .checkout-layout {
@@ -1497,6 +1743,14 @@ textarea {
   }
 
   .payment-method-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .browse-strip-fields,
+  .listing-launch-grid,
+  .overview-layout,
+  .listing-layout,
+  .compact-zone-stage {
     grid-template-columns: 1fr;
   }
 
@@ -1563,6 +1817,11 @@ textarea {
     align-items: flex-start;
   }
 
+  .browse-strip-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .tour-row {
     grid-template-columns: 1fr;
   }
@@ -1582,7 +1841,9 @@ textarea {
   .market-grid,
   .card-grid,
   .related-grid,
-  .checkout-field-grid {
+  .checkout-field-grid,
+  .browse-strip-fields,
+  .listing-launch-grid {
     grid-template-columns: 1fr;
   }
 

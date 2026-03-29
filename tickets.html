@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Morgan Wallen Tickets | Ticket Hub</title>
+  <title>Morgan Wallen Tickets | Event Overview</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Special+Elite&display=swap" rel="stylesheet" />
@@ -31,82 +31,64 @@
 
       <div class="socials" aria-label="Quick links">
         <a class="social-link" href="https://morganwallen.com/tour/" target="_blank" rel="noreferrer" aria-label="Official tour">tour</a>
+        <a class="social-link" href="listings.html" aria-label="Available listings">list</a>
         <a class="social-link" href="https://shop.morganwallen.com/" target="_blank" rel="noreferrer" aria-label="Official store">shop</a>
-        <a class="social-link" href="checkout.html" aria-label="Checkout">cart</a>
       </div>
     </header>
 
-    <main class="ticket-page">
-      <noscript class="no-script">Enable JavaScript to switch events, filter listings, and continue into checkout.</noscript>
+    <main class="ticket-page ticket-overview-page">
+      <noscript class="no-script">Enable JavaScript to switch events, browse halls, and continue into the separate listings page.</noscript>
 
       <section class="ticket-hero">
         <a class="back-link" href="index.html#tour">Back to featured tour dates</a>
         <div class="ticket-hero-grid">
           <div>
-            <p class="eyebrow">Marketplace Ticket Hub</p>
+            <p class="eyebrow">Event Overview</p>
             <h1 id="ticketEventTitle">Loading event...</h1>
             <p class="ticket-meta" id="ticketEventMeta"></p>
             <div class="ticket-chip-row" id="ticketHeroChips"></div>
           </div>
 
-          <aside class="ticket-hero-note">
-            <p class="eyebrow">Built Like A Real Listing Page</p>
+          <aside class="ticket-hero-note ticket-hero-note-emphasis">
+            <p class="eyebrow">Step 1</p>
             <p class="market-caption">
-              Filters, delivery types, all-in pricing, protection notes, and checkout review were modeled after current resale marketplace patterns.
+              Review the hall mix, price bands, and event details here first. Once you scroll the hall list, use the listings button to open the dedicated order page.
             </p>
           </aside>
         </div>
       </section>
 
-      <section class="filter-bar" id="ticketFilters" aria-label="Ticket filters">
-        <label class="filter-field">
-          <span>Event</span>
-          <select id="eventSelect"></select>
-        </label>
+      <section class="browse-strip" aria-label="Ticket overview controls">
+        <div class="browse-strip-fields">
+          <label class="filter-field">
+            <span>Event</span>
+            <select id="eventSelect"></select>
+          </label>
 
-        <label class="filter-field">
-          <span>Quantity</span>
-          <select id="quantitySelect">
-            <option value="1">1 ticket</option>
-            <option value="2" selected>2 tickets</option>
-            <option value="3">3 tickets</option>
-            <option value="4">4 tickets</option>
-            <option value="5">5 tickets</option>
-            <option value="6">6 tickets</option>
-          </select>
-        </label>
+          <label class="filter-field">
+            <span>Quantity</span>
+            <select id="quantitySelect">
+              <option value="1">1 ticket</option>
+              <option value="2" selected>2 tickets</option>
+              <option value="3">3 tickets</option>
+              <option value="4">4 tickets</option>
+              <option value="5">5 tickets</option>
+              <option value="6">6 tickets</option>
+            </select>
+          </label>
+        </div>
 
-        <label class="filter-field">
-          <span>Delivery</span>
-          <select id="deliverySelect">
-            <option value="all">All delivery</option>
-            <option value="Mobile transfer">Mobile transfer</option>
-            <option value="Instant download">Instant download</option>
-          </select>
-        </label>
-
-        <label class="filter-field">
-          <span>Sort</span>
-          <select id="sortSelect">
-            <option value="recommended">Recommended</option>
-            <option value="lowest">Lowest price</option>
-            <option value="highest">Highest price</option>
-            <option value="closest">Closest to stage</option>
-          </select>
-        </label>
-
-        <label class="filter-field">
-          <span>Search</span>
-          <input id="listingSearch" type="search" placeholder="Section, zone, note" />
-        </label>
-
-        <label class="filter-field">
-          <span id="priceRangeLabel">Max price per ticket</span>
-          <input id="priceRange" type="range" />
-        </label>
+        <div class="browse-strip-panel">
+          <p class="eyebrow">Next Step</p>
+          <p class="section-lead" id="overviewLaunchNote">Review the halls below, then open the separate listings page.</p>
+          <div class="browse-strip-actions">
+            <span class="browse-strip-tag">Selected hall: <strong id="overviewSelectedZoneInline">All halls</strong></span>
+            <a class="button" id="overviewListingsTopLink" href="listings.html">Show Available Listings</a>
+          </div>
+        </div>
       </section>
 
-      <section class="ticket-layout">
+      <section class="ticket-layout overview-layout">
         <div class="ticket-main-column">
           <section class="market-grid" id="marketGrid" aria-label="Market stats"></section>
 
@@ -122,74 +104,85 @@
             <div class="zone-list" id="zoneList" aria-label="Seat zones"></div>
           </section>
 
-          <section class="listings-stage">
-            <div class="listings-head">
-              <h2>Available Listings</h2>
-              <p class="ticket-toolbar-note" id="resultsCount"></p>
+          <section class="listing-launch">
+            <div>
+              <p class="eyebrow">Step 2</p>
+              <h2>Show Available Listings</h2>
+              <p class="section-lead">
+                After reviewing the hall layout, open the dedicated listings page to compare actual order cards, quantities, pricing, and checkout-ready totals.
+              </p>
             </div>
 
-            <div class="listing-grid" id="listingGrid"></div>
+            <div class="listing-launch-grid">
+              <div class="listing-launch-item">
+                <span>Lowest price</span>
+                <strong id="overviewPriceFrom">$0</strong>
+              </div>
+              <div class="listing-launch-item">
+                <span>Average price</span>
+                <strong id="overviewAveragePrice">$0</strong>
+              </div>
+              <div class="listing-launch-item">
+                <span>Listings live</span>
+                <strong id="overviewTicketsAvailable">0 listed</strong>
+              </div>
+              <div class="listing-launch-item">
+                <span>Selected quantity</span>
+                <strong id="overviewSelectedQuantity">2 tickets</strong>
+              </div>
+            </div>
+
+            <a class="button listing-launch-button" id="overviewListingsLink" href="listings.html">Show Available Listings</a>
           </section>
 
           <section class="faq-stage">
-            <h2>Before You Checkout</h2>
+            <h2>Before You Open Listings</h2>
 
             <details open>
-              <summary>Why do prices move so much?</summary>
+              <summary>What am I looking at in the hall list?</summary>
               <p class="faq-answer">
-                Marketplace sellers set their own prices, so high-demand dates and lower inventory can push listings well above face value.
+                These hall groupings mirror the way resale shoppers usually start: broad seating lanes first, then filtered listings once they know the section style they want.
               </p>
             </details>
 
             <details>
-              <summary>What delivery types are supported here?</summary>
+              <summary>Why is the listings page separate now?</summary>
               <p class="faq-answer">
-                This build supports mobile transfer and instant download styles, matching the most common delivery paths shown on resale marketplaces.
+                The overview page focuses on venue layout, event context, and hall pricing bands. The separate listings page handles the actual order cards, filters, and checkout handoff.
               </p>
             </details>
 
             <details>
-              <summary>What happens if there is a ticket problem?</summary>
+              <summary>Does the selected hall carry into listings?</summary>
               <p class="faq-answer">
-                The protection copy on this page mirrors the standard marketplace pattern: valid-entry expectation, on-time delivery, and comparable replacement
-                or refund review if something goes wrong.
+                Yes. When you use the listings button from this page, the selected quantity and hall filter move with you so the listing page opens in the right context.
               </p>
             </details>
           </section>
         </div>
 
-        <aside class="summary-card" id="summaryCard">
-          <p class="eyebrow">Order Summary</p>
-          <h2 id="summaryEventTitle">Choose a listing</h2>
+        <aside class="summary-card overview-summary-card">
+          <p class="eyebrow">Venue Snapshot</p>
+          <h2 id="overviewSummaryTitle">Loading event...</h2>
 
-          <div class="summary-ticket" id="summaryTicket"></div>
-
-          <div class="summary-line">
-            <span>Selected quantity</span>
-            <strong id="summaryQuantity">2 tickets</strong>
-          </div>
+          <div class="summary-ticket" id="overviewSummaryCard"></div>
 
           <div class="summary-line">
-            <span>Ticket subtotal</span>
-            <strong id="summarySubtotal">$0</strong>
+            <span>Tickets listed</span>
+            <strong id="overviewTicketsAvailableSidebar">Live market</strong>
           </div>
 
           <div class="summary-line">
-            <span>Estimated fees</span>
-            <strong id="summaryFees">$0</strong>
+            <span>Selected hall</span>
+            <strong id="overviewSelectedZone">All halls</strong>
           </div>
 
-          <div class="summary-total">
-            <span>Estimated order total</span>
-            <strong id="summaryTotal">$0</strong>
-          </div>
-
-          <a class="button summary-checkout" id="checkoutLink" href="checkout.html">Continue to Checkout</a>
+          <a class="button summary-checkout" id="overviewSidebarLink" href="listings.html">Show Available Listings</a>
 
           <ul class="summary-protection">
-            <li>Delivery path shown before checkout</li>
-            <li>Comparable replacement or refund review if an issue is reported</li>
-            <li>Displayed pricing reflects a 10% sitewide discount on the March 29, 2026 public listings</li>
+            <li>Hall-level overview before opening order listings</li>
+            <li>Quantity selection carries into the listings page</li>
+            <li>Displayed pricing reflects the sitewide 10% discount presentation</li>
           </ul>
         </aside>
       </section>
@@ -200,7 +193,7 @@
             <p class="eyebrow">Related Dates</p>
             <h2>Keep Shopping The Tour</h2>
           </div>
-          <p>Jump between other featured stadium stops without leaving the ticket hub.</p>
+          <p>Jump between other featured stadium stops before you open the separate listings page.</p>
         </div>
 
         <div class="related-grid" id="relatedGrid"></div>
@@ -209,12 +202,12 @@
 
     <footer class="site-footer">
       <p>
-        Ticket hub interactions are local to this project. Prices, averages, and availability are sample marketplace snapshots assembled on March 29, 2026, with a 10% sitewide discount applied to displayed pricing.
+        Event overview interactions are local to this project. Hall browsing, pricing context, and the listings handoff are built from March 29, 2026 marketplace snapshots with the 10% discount display applied.
       </p>
 
       <div class="footer-links">
         <a href="index.html#tour">Back to Tour</a>
-        <a href="checkout.html">Checkout</a>
+        <a href="listings.html">Available Listings</a>
         <a href="https://morganwallen.com/tour/" target="_blank" rel="noreferrer">Official Tour</a>
       </div>
     </footer>
